@@ -795,17 +795,11 @@ function SinglePlayerPanel({
   const ay = Number(verse?.ayah || 0);
 
   return (
-    <div
-      className="singlePlayerBackdrop"
-      role="dialog"
-      aria-modal="true"
-      aria-label="Single Player"
-      onMouseDown={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-      onTouchStart={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
+  <div
+    className="singlePlayerBackdrop"
+    role="dialog"
+    aria-modal="true"
+    aria-label="Single Player"
     >
       <div className="singlePlayerCard">
         <div className="singlePlayerLines">
@@ -868,10 +862,18 @@ function SinglePlayerPanel({
   );
 }
 
-const VerseRow = React.memo(function VerseRow({ v, idx, active, onRowClick, setRowRef, markSegment }) {
+const VerseRow = React.memo(function VerseRow({
+  v,
+  idx,
+  active,
+  onRowClick,
+  setRowRef,
+  markSegment,
+}) {
+  const ay = Number(v?.ayah || 0);
   const arText = (v.ar || "").trimStart();
-  const deText = v.de || "";
-  const trText = v.tr || "";
+const deText = (v.de || "").replace(/\s*\n+\s*/g, " ").trim();
+const trText = (v.tr || "").replace(/\s*\n+\s*/g, " ").trim();
 
   return (
     <button
@@ -883,12 +885,12 @@ const VerseRow = React.memo(function VerseRow({ v, idx, active, onRowClick, setR
       <div className="cell colNo">{v.ayah}</div>
 
       <div className="cell colAr" dir="rtl">
-        {active ? markSegment(arText, v.ayah, "ar") : arText}
+        {markSegment(arText, ay, "ar")}
       </div>
 
-      <div className="cell colDe">{active ? markSegment(deText, v.ayah, "de") : deText}</div>
+      <div className="cell colDe">{markSegment(deText, ay, "de")}</div>
 
-      <div className="cell colTr">{active ? markSegment(trText, v.ayah, "tr") : trText}</div>
+      <div className="cell colTr">{markSegment(trText, ay, "tr")}</div>
     </button>
   );
 });
