@@ -17,11 +17,7 @@ const SURAHES = [
   },
 ];
 
-/**
- * SEGMENTS:
- * - ar: highlight + color
- * - tr/de: color only (segment if found, otherwise no coloring)
- */
+// Yusuf highlight snippetleri
 const SEGMENTS = {
   6: {
     color: "green",
@@ -47,7 +43,12 @@ const SEGMENTS = {
     de: "So vergelten Wir den Gutes Tuenden.",
     tr: "“Kendilerini iyiliğe adamış, daima Allah’ı görüyormuşçasına ve Allah’ın kendilerini gördüğünün şuuru içinde davrananları işte böyle mükâfatlandırırız.”",
   },
-  23: { color: "red", ar: "مَعَاذَ ٱللَّهِ", de: "Allah schütze mich (davor)!", tr: "“Allah korusun!”" },
+  23: {
+    color: "red",
+    ar: "مَعَاذَ ٱللَّهِ",
+    de: "Allah schütze mich (davor)!",
+    tr: "“Allah korusun!”",
+  },
   34: {
     color: "green",
     ar: "إِنَّهُۥ هُوَ ٱلسَّمِيعُ ٱلْعَلِيمُ",
@@ -98,12 +99,7 @@ const SEGMENTS = {
   },
   80: { color: "green", ar: "وَهُوَ خَيْرُ ٱلْحَٰكِمِينَ", de: "Er ist der Beste derer, die Urteile fällen.", tr: "“Allah, her zaman en hayırlı hükmü verendir.”" },
   86: { color: "red", ar: "إِنَّمَآ أَشْكُوا۟ بَثِّى وَحُزْنِىٓ إِلَى ٱللَّهِ", de: "Ich klage meinen unerträglichen Kummer und meine Trauer nur Allah (allein)", tr: "“Ben, bütün dertlerimi, keder ve hüznümü Allah’a arz ediyor, O’na şikâyette bulunuyorum.”" },
-  87: {
-    color: "green",
-    ar: "وَلَا تَا۟يْـَٔسُوا۟ مِن رَّوْحِ ٱللَّهِ ۖ إِنَّهُۥ لَا يَا۟يْـَٔسُ مِن رَّوْحِ ٱللَّهِ إِلَّا ٱلْقَوْمُ ٱلْكَٰفِرُونَ",
-    de: "Und gebt nicht die Hoffnung auf das Erbarmen Allahs auf. Es gibt die Hoffnung auf das Erbarmen Allahs nur das ungläubige Volk auf.",
-    tr: "“Allah’ın rahmetinden asla ümidinizi kesmeyin. Şurası bir gerçek ki, O’na inanmayan kâfirler güruhu dışında hiç kimse Allah’ın rahmetinden ümit kesmez.”",
-  },
+  87: { color: "green", ar: "وَلَا تَا۟يْـَٔسُوا۟ مِن رَّوْحِ ٱللَّهِ ۖ إِنَّهُۥ لَا يَا۟يْـَٔسُ مِن رَّوْحِ ٱللَّهِ إِلَّا ٱلْقَوْمُ ٱلْكَٰفِرُونَ", de: "Und gebt nicht die Hoffnung auf das Erbarmen Allahs auf. Es gibt die Hoffnung auf das Erbarmen Allahs nur das ungläubige Volk auf.", tr: "“Allah’ın rahmetinden asla ümidinizi kesmeyin. Şurası bir gerçek ki, O’na inanmayan kâfirler güruhu dışında hiç kimse Allah’ın rahmetinden ümit kesmez.”" },
   88: { color: "green", ar: "إِنَّ ٱللَّهَ يَجْزِى ٱلْمُتَصَدِّقِينَ", de: "Allah vergilt denjenigen, die Almosen geben.", tr: "“Hiç kuşkusuz Allah, fazladan iyilikte bulunanları bol bol mükâfatlandırır.”" },
   90: { color: "green", ar: "إِنَّ ٱللَّهُ لَا يُضِيعُ أَجْرَ ٱلْمُحْسِنِينَ", de: "Gewiß, Allah läßt den Lohn der Gutes Tuenden nicht verlorengehen.", tr: "“Doğrusu şu ki, kim O’na karşı derin saygı duyar, O’na karşı gelmekten sakınır ve O’na itaatla birlikte başına gelenlere de sabrederse, hiç şüphesiz Allah, böyle iyiliğe adanmış ve O’nu görürcesine davranan kimselerin mükâfatını asla zayi etmez.”" },
   91: { color: "green", ar: "تَٱللَّهِ لَقَدْ ءَاثَرَكَ ٱللَّهُ عَلَيْنَا وَإِن كُنَّا لَخَٰطِـِٔينَ", de: "Bei Allah, Allah hat dich uns vorgezogen. Und wir haben wahrlich Verfehlungen begangen.", tr: "“Allah’a yemin olsun ki, gerçekten Allah seni bize tercih etti; biz, başka değil, ancak bir yanlış içinde idik.”" },
@@ -133,8 +129,6 @@ function tactilePulse(ms = 8) {
   } catch {}
 }
 
-/* active verse index */
-
 function isMonotonicNonDecreasing(arr) {
   for (let i = 1; i < arr.length; i += 1) {
     if (!(arr[i] >= arr[i - 1])) return false;
@@ -144,7 +138,6 @@ function isMonotonicNonDecreasing(arr) {
 
 function findActiveVerseIndexBinary(starts, ends, t) {
   if (!Number.isFinite(t) || !starts.length || starts.length !== ends.length) return -1;
-
   let lo = 0;
   let hi = starts.length - 1;
   let best = -1;
@@ -198,7 +191,6 @@ function findActiveVerseIndexLinearOverlapSafe(verses, t) {
   return closest;
 }
 
-/* sticky scroll helper */
 function getStickyOverlayTopPx() {
   const el = document.querySelector(".playerSticky");
   if (!el) return null;
@@ -224,7 +216,6 @@ function ensureRowVisible(el, padding = 10) {
   if (above || below) el.scrollIntoView({ behavior: "smooth", block: "nearest" });
 }
 
-/* JSON tolerant */
 function parseJsonTolerant(text, urlForMsg = "") {
   const raw = String(text ?? "");
   let s = raw.replace(/^\uFEFF/, "").trim();
@@ -244,14 +235,6 @@ function parseJsonTolerant(text, urlForMsg = "") {
     return JSON.parse(s);
   } catch (e) {
     const msg = String(e?.message || e);
-    const m = msg.match(/position\s+(\d+)/i);
-    if (m) {
-      const pos = Number(m[1]);
-      const from = Math.max(0, pos - 80);
-      const to = Math.min(s.length, pos + 80);
-      const ctx = s.slice(from, to).replaceAll("\n", "\\n");
-      throw new Error(`JSON parse failed | url=${urlForMsg} | pos=${pos} | ctx=...${ctx}...`);
-    }
     throw new Error(`JSON parse failed | url=${urlForMsg} | msg=${msg}`);
   }
 }
@@ -337,7 +320,6 @@ function normalizeArabicForSearch(original) {
 
   for (let i = 0; i < s.length; i += 1) {
     const ch = s[i];
-
     if (isArabicIgnorable(ch)) continue;
 
     if (/\s/.test(ch)) {
@@ -348,9 +330,8 @@ function normalizeArabicForSearch(original) {
       continue;
     }
 
-    const folded = foldArabicChar(ch);
     map.push(i);
-    norm += folded;
+    norm += foldArabicChar(ch);
   }
 
   return { norm: norm.trim().replace(/\s+/g, " "), map };
@@ -484,8 +465,6 @@ function useMarkSegmentCached() {
   return { markSegment, clearCache: clear };
 }
 
-/* UI */
-
 function MinimalPlayerBar({ isPlaying, onPlayPause, onPrev, onNext, onOpenSingle }) {
   return (
     <div className="playerControls">
@@ -512,9 +491,6 @@ function MinimalPlayerBar({ isPlaying, onPlayPause, onPrev, onNext, onOpenSingle
   );
 }
 
-/**
- * iOS-like vertical wheel (3D) - accel + inertia tuned
- */
 function IOSPickerWheelVertical3D({ disabled, value, onStep }) {
   const ref = useRef(null);
 
@@ -573,8 +549,6 @@ function IOSPickerWheelVertical3D({ disabled, value, onStep }) {
 
   const startInertia = () => {
     const v0 = velRef.current;
-
-    // boost fling inertia
     velRef.current = v0 * 2.8;
 
     if (!Number.isFinite(v0) || Math.abs(v0) < 0.03) {
@@ -632,8 +606,7 @@ function IOSPickerWheelVertical3D({ disabled, value, onStep }) {
 
     velRef.current = dy / dt;
 
-    // acceleration: faster drag => faster stepping
-    const sp = Math.abs(velRef.current); // px/ms
+    const sp = Math.abs(velRef.current);
     const mult = clamp(1 + sp * 26, 1, 7.5);
 
     accumPxRef.current += dy * mult;
@@ -697,7 +670,6 @@ function IOSPickerWheelVertical3D({ disabled, value, onStep }) {
           {items.map((n, i) => {
             const ang = angles[i] ?? 0;
             const active = n === Number(value);
-
             const abs = Math.abs(ang);
             const opacity = clamp(1 - abs / 92, 0.12, 1);
             const scale = clamp(1 - abs / 220, 0.86, 1);
@@ -774,15 +746,12 @@ function SinglePlayerPanel({
           <div className="singlePlayerLine singlePlayerLineAr" dir="rtl">
             {markSegment((verse?.ar || "—").trim(), ay, "ar")}
           </div>
-
           <div className="singlePlayerLine singlePlayerLineDe">
             {markSegment((verse?.de || "—").trim(), ay, "de")}
           </div>
-
           <div className="singlePlayerLine singlePlayerLineTr">
             {markSegment((verse?.tr || "—").trim(), ay, "tr")}
           </div>
-
           <div style={{ height: 140 }} />
         </div>
       </div>
@@ -840,11 +809,9 @@ const VerseRow = React.memo(function VerseRow({ v, idx, active, onRowClick, setR
       ref={(el) => setRowRef(idx, el)}
     >
       <div className="cell colNo">{v.ayah}</div>
-
       <div className="cell colAr" dir="rtl">
         {markSegment(arText, ay, "ar")}
       </div>
-
       <div className="cell colDe">{markSegment(deText, ay, "de")}</div>
       <div className="cell colTr">{markSegment(trText, ay, "tr")}</div>
     </button>
@@ -893,7 +860,6 @@ export default function App() {
   const [activeIndex, setActiveIndex] = useState(-1);
   const [singleOn, setSingleOn] = useState(true);
 
-  // repeat: 0 off, 1 => 1 tekrar, 2 => 2 tekrar
   const [repeatMode, setRepeatMode] = useState(0);
   const repeatStateRef = useRef({ idx: -1, done: 0, armed: true, lastFire: 0 });
 
@@ -916,21 +882,13 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    try {
-      const ua = navigator.userAgent || "";
-      const isSafari = /safari/i.test(ua) && !/chrome|crios|chromium|android/i.test(ua);
-      document.documentElement.classList.toggle("isSafari", isSafari);
-    } catch {}
-  }, []);
-
-  useEffect(() => {
     versesRef.current = verses;
     activeIndexRef.current = activeIndex;
     durationRef.current = duration;
     isPlayingRef.current = isPlaying;
   }, [verses, activeIndex, duration, isPlaying]);
 
-  // Lock background while single player open (scroll freeze)
+  // Single player açıkken arka plan scroll kilidi
   useEffect(() => {
     if (!singleOn) {
       document.body.classList.remove("spOpen");
@@ -951,8 +909,8 @@ export default function App() {
     };
   }, [singleOn]);
 
-  const audioSrc = useMemo(() => (selectedSurah ? resolvePublicUrl(selectedSurah.audioUrl) : ""), [selectedSurah]);
-  const versesSrc = useMemo(() => (selectedSurah ? resolvePublicUrl(selectedSurah.versesUrl) : ""), [selectedSurah]);
+  const audioSrc = useMemo(() => resolvePublicUrl(selectedSurah.audioUrl), [selectedSurah.audioUrl]);
+  const versesSrc = useMemo(() => resolvePublicUrl(selectedSurah.versesUrl), [selectedSurah.versesUrl]);
 
   const { starts, ends, monotonic } = useMemo(() => {
     const s = [];
@@ -995,9 +953,7 @@ export default function App() {
         const text = await res.text();
 
         if (!res.ok) {
-          throw new Error(
-            `Fetch failed: ${res.status} ${res.statusText} | url=${versesSrc} | body=${text.slice(0, 160)}`
-          );
+          throw new Error(`Fetch failed: ${res.status} ${res.statusText} | url=${versesSrc}`);
         }
 
         const data = parseJsonTolerant(text, versesSrc);
@@ -1019,7 +975,7 @@ export default function App() {
     };
   }, [versesSrc, clearCache]);
 
-  // Audio listeners (tick throttled)
+  // Audio listeners
   useEffect(() => {
     const a = audioRef.current;
     if (!a) return;
@@ -1149,15 +1105,16 @@ export default function App() {
     });
   }, [seekTo]);
 
-  // Active index update + repeat engine (tick-driven)
+  // Active index update + repeat engine
   useEffect(() => {
     const a = audioRef.current;
     if (!a) return;
 
-    // Active verse
     if (verses.length) {
       const t = currentTimeRef.current;
-      const idx = monotonic ? findActiveVerseIndexBinary(starts, ends, t) : findActiveVerseIndexLinearOverlapSafe(verses, t);
+      const idx = monotonic
+        ? findActiveVerseIndexBinary(starts, ends, t)
+        : findActiveVerseIndexLinearOverlapSafe(verses, t);
 
       if (idx !== -1 && idx !== activeIndexRef.current) {
         setActiveIndex(idx);
@@ -1166,7 +1123,6 @@ export default function App() {
       }
     }
 
-    // Repeat engine
     if (!verses.length) return;
     if (repeatMode <= 0) return;
 
@@ -1217,9 +1173,8 @@ export default function App() {
   }, [tick, verses, monotonic, starts, ends, repeatMode]);
 
   const activeVerse = useMemo(() => (activeIndex >= 0 ? verses[activeIndex] : null), [activeIndex, verses]);
-  const dialDisabled = !verses.length;
 
-  const header = selectedSurah ? (
+  const header = (
     <div className="surahHeader">
       <div className="surahHeaderLeft">
         <h2 className="surahTitle">
@@ -1236,14 +1191,9 @@ export default function App() {
         <span className="badge">Loaded: {verses.length}</span>
       </div>
     </div>
-  ) : null;
-
-  const onRowClick = useCallback(
-    (idx) => {
-      seekVerse(idx, true);
-    },
-    [seekVerse]
   );
+
+  const onRowClick = useCallback((idx) => seekVerse(idx, true), [seekVerse]);
 
   const setRowRef = useCallback((idx, el) => {
     rowRefs.current[idx] = el;
@@ -1266,7 +1216,7 @@ export default function App() {
             setSingleOn(false);
             pause();
           }}
-          dialDisabled={dialDisabled}
+          dialDisabled={!verses.length}
           onDialStep={(dir) => {
             const vs = versesRef.current;
             if (!vs.length) return;
@@ -1291,539 +1241,8 @@ export default function App() {
           />
         </div>
 
-        <VersesTable
-          verses={verses}
-          activeIndex={activeIndex}
-          onRowClick={onRowClick}
-          setRowRef={setRowRef}
-          markSegment={markSegment}
-        />
+        <VersesTable verses={verses} activeIndex={activeIndex} onRowClick={onRowClick} setRowRef={setRowRef} markSegment={markSegment} />
       </main>
     </div>
   );
-}
-
-
-// =========================
-// FILE: src/styles.css
-// =========================
-:root{
-  --bg:#0b0f16;
-  --panel:#0f1520;
-  --border:rgba(255,255,255,0.08);
-  --text:rgba(255,255,255,0.92);
-  --muted:rgba(255,255,255,0.62);
-  --accent:rgba(99,179,237,1);
-  --danger:rgba(255,120,120,0.18);
-
-  --w-no: 70px;
-  --w-ar: 1.1fr;
-  --w-de: 1fr;
-  --w-tr: 1fr;
-
-  --markRed: rgba(235, 78, 62, 1);
-  --markRedBg: rgba(235, 78, 62, 0.18);
-  --markGreen: rgba(82, 210, 140, 1);
-  --markGreenBg: rgba(82, 210, 140, 0.16);
-}
-
-*{ box-sizing:border-box; }
-
-html,body{
-  height:100%;
-  margin:0;
-  background:
-    radial-gradient(1200px 800px at 30% 15%, rgba(120,120,255,0.12), transparent 55%),
-    radial-gradient(1200px 800px at 70% 35%, rgba(255,120,120,0.10), transparent 55%),
-    var(--bg);
-  color:var(--text);
-  font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial,"Noto Sans","Apple Color Emoji","Segoe UI Emoji";
-}
-
-.muted{ color:var(--muted); }
-.mono{ font-variant-numeric:tabular-nums; }
-
-.appShell{ display:grid; grid-template-columns: 1fr; min-height:100vh; }
-.appShellSolo{ grid-template-columns: 1fr !important; }
-
-.content{ padding:16px; }
-
-/* header */
-.surahHeader{
-  border:1px solid var(--border);
-  background:rgba(15,21,32,0.55);
-  border-radius:16px;
-  padding:14px 16px;
-  display:grid;
-  grid-template-columns:1fr auto;
-  gap:10px;
-}
-.surahTitle{ margin:0; font-size:20px; }
-.surahSub{ color:var(--muted); margin-top:3px; }
-.surahHeaderRight{ font-size:18px; align-self:start; }
-.surahBadges{ grid-column:1 / -1; display:flex; gap:8px; flex-wrap:wrap; margin-top:6px; }
-.badge{
-  font-size:12px;
-  color:var(--muted);
-  border:1px solid var(--border);
-  background:rgba(0,0,0,0.18);
-  padding:6px 10px;
-  border-radius:999px;
-}
-
-.errorBox{
-  margin-top:12px;
-  border:1px solid rgba(255,120,120,0.35);
-  background:var(--danger);
-  border-radius:12px;
-  padding:10px 12px;
-}
-
-/* Player bar */
-.playerCard{
-  margin-top:14px;
-  border:1px solid var(--border);
-  background:rgba(15,21,32,0.55);
-  border-radius:16px;
-  padding:12px;
-  position:relative;
-}
-.playerSticky{
-  position:sticky;
-  top:10px;
-  z-index:20;
-  backdrop-filter:blur(10px);
-  -webkit-backdrop-filter:blur(10px);
-}
-.playerControls{ display:grid; gap:10px; }
-
-.liveTimeBar{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:12px;
-  flex-wrap:wrap;
-}
-.liveTime{ display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; }
-.liveActions{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
-.liveLabel{
-  font-size:12px;
-  color:var(--muted);
-  border:1px solid var(--border);
-  background:rgba(0,0,0,0.18);
-  padding:4px 8px;
-  border-radius:999px;
-}
-
-.btnSmall,.btnPrimary{
-  border:1px solid var(--border);
-  background:rgba(0,0,0,0.22);
-  color:var(--text);
-  cursor:pointer;
-  border-radius:10px;
-}
-.btnSmall{ padding:8px 10px; }
-.btnPrimary{
-  padding:12px 18px;
-  border-radius:12px;
-  font-size:14px;
-  font-weight:800;
-  border-color: rgba(99,179,237,0.35);
-  box-shadow: 0 0 0 2px rgba(99,179,237,0.10) inset;
-}
-.btnSmall:hover,.btnPrimary:hover{ border-color:rgba(255,255,255,0.16); }
-
-/* Single Player button */
-.btnSinglePlayer{
-  padding: 14px 16px;
-  border-radius: 14px;
-  font-size: 15px;
-  font-weight: 950;
-  cursor: pointer;
-  color: rgba(10,14,22,0.98);
-  border: 1px solid rgba(255,255,255,0.18);
-  background: linear-gradient(180deg, rgba(170,220,255,1), rgba(99,179,237,1));
-  box-shadow:
-    0 10px 22px rgba(0,0,0,0.35),
-    0 3px 0 rgba(255,255,255,0.22) inset,
-    0 -6px 10px rgba(0,0,0,0.25) inset;
-  transform: translateY(0);
-}
-.btnSinglePlayer:hover{ filter: brightness(1.06); }
-.btnSinglePlayer:active{
-  transform: translateY(2px);
-  box-shadow:
-    0 6px 14px rgba(0,0,0,0.30),
-    0 2px 0 rgba(255,255,255,0.18) inset,
-    0 -4px 8px rgba(0,0,0,0.22) inset;
-}
-
-/* Table */
-.tableWrap{
-  margin-top:14px;
-  border:1px solid var(--border);
-  background:rgba(15,21,32,0.55);
-  border-radius:16px;
-  overflow:auto;
-}
-.tableHeader, .row{ min-width:980px; }
-
-.tableHeader{
-  display:grid;
-  grid-template-columns: var(--w-no) var(--w-ar) var(--w-de) var(--w-tr);
-  padding:12px;
-  border-bottom:1px solid var(--border);
-  color:var(--muted);
-  font-size:13px;
-  position:sticky;
-  top:0;
-  background:rgba(15,21,32,0.90);
-  backdrop-filter:blur(10px);
-  -webkit-backdrop-filter:blur(10px);
-  z-index:2;
-}
-
-.row{
-  display:grid;
-  grid-template-columns: var(--w-no) var(--w-ar) var(--w-de) var(--w-tr);
-  border-bottom:1px solid rgba(255,255,255,0.06);
-  padding:10px 12px;
-  text-align:left;
-  color:inherit;
-  cursor:pointer;
-  align-items: stretch;
-}
-.tableBody .row:nth-child(odd){ background-color: rgba(255,255,255,0.05); }
-.tableBody .row:nth-child(even){ background-color: rgba(0,0,0,0.18); }
-.row:hover{ filter: brightness(1.06); }
-.row.active{
-  background-color: rgba(99,179,237,0.14) !important;
-  box-shadow: 0 0 0 1px rgba(99,179,237,0.35) inset;
-}
-
-.cell{
-  padding-right:10px;
-  border-right:1px solid rgba(255,255,255,0.06);
-  display:flex;
-  align-items:flex-start;
-  min-height: 100%;
-  white-space: normal;
-}
-.cell:last-child{ border-right:none; }
-
-.colNo{ color:var(--muted); font-variant-numeric:tabular-nums; }
-.colAr{
-  display:block !important;
-  direction: rtl;
-  unicode-bidi: isolate-override;
-  text-align: right;
-  font-size: 18px;
-  line-height: 1.55;
-  padding-left: 12px;
-  font-family: "Noto Naskh Arabic","Amiri","Scheherazade New","Noto Sans Arabic", serif;
-  white-space: normal;
-}
-.colDe, .colTr{
-  font-size:14px;
-  line-height:1.5;
-  text-align:left;
-}
-
-/* Single line in table for TR/DE (no paragraph look) */
-.colDe, .colTr{
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* Single Player overlay */
-@keyframes spBackdropIn{
-  0% { opacity: 0; transform: translateY(10px); }
-  100% { opacity: 1; transform: translateY(0px); }
-}
-
-.singlePlayerBackdrop{
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  background: rgba(0,0,0,0.78); /* less transparent */
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  display: grid;
-  place-items: center;
-  padding: 14px;
-  animation: spBackdropIn 420ms cubic-bezier(0.16, 1, 0.3, 1) both;
-  overflow: hidden;
-  pointer-events: auto;
-}
-
-.singlePlayerCard{
-  width: min(1100px, 100%);
-  background: rgba(15,21,32,0.86);
-  border: 1px solid rgba(255,255,255,0.12);
-  border-radius: 20px;
-  box-shadow: 0 30px 90px rgba(0,0,0,0.55);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  padding: 14px;
-  max-height: 86vh;
-  overflow: auto;
-}
-
-.singlePlayerLines{ display: grid; gap: 10px; }
-
-.singlePlayerLine{
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 16px;
-  padding: 12px 14px;
-  background: rgba(0,0,0,0.14);
-}
-.singlePlayerLines > :nth-child(odd){ background: rgba(255,255,255,0.06); }
-
-.singlePlayerLineAr{
-  direction: rtl;
-  unicode-bidi: isolate-override;
-  text-align: right;
-  font-family: "Noto Naskh Arabic","Amiri","Scheherazade New","Noto Sans Arabic", serif;
-  font-size: clamp(44px, 7.0vw, 78px);
-  line-height: 1.75;
-  white-space: pre-wrap;
-}
-.singlePlayerLineDe,
-.singlePlayerLineTr{
-  font-size: clamp(26px, 4.0vw, 40px);
-  line-height: 1.55;
-  white-space: pre-wrap;
-}
-.singlePlayerLineDe{ color: rgba(255,255,255,0.82); }
-
-/* Buttons */
-.spBtn{
-  min-width: 66px;
-  height: 66px;
-  padding: 0 16px;
-  border-radius: 18px;
-  cursor:pointer;
-  font-weight: 950;
-  font-size: 26px;
-  color: rgba(10,14,22,0.98);
-  border: 1px solid rgba(255,255,255,0.22);
-  background: linear-gradient(180deg, rgba(210,235,255,1), rgba(145,205,250,1));
-  box-shadow:
-    0 10px 22px rgba(0,0,0,0.38),
-    0 3px 0 rgba(255,255,255,0.22) inset,
-    0 -6px 10px rgba(0,0,0,0.22) inset;
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  touch-action: manipulation;
-}
-.spBtn:active{
-  transform: translateY(2px);
-  box-shadow:
-    0 6px 14px rgba(0,0,0,0.32),
-    0 2px 0 rgba(255,255,255,0.18) inset,
-    0 -4px 8px rgba(0,0,0,0.20) inset;
-}
-.spBtnPrimary{
-  min-width: 118px;
-  height: 74px;
-  font-size: 30px;
-  background: linear-gradient(180deg, rgba(200,255,220,1), rgba(110,230,165,1));
-}
-.spBtnClose{
-  background: linear-gradient(180deg, rgba(255,220,220,1), rgba(255,150,150,1));
-}
-
-/* Wheel */
-.spPicker3D{
-  width: 120px;
-  height: 160px;
-  border-radius: 18px;
-  border: 1px solid rgba(255,255,255,0.16);
-  background: rgba(0,0,0,0.18);
-  box-shadow:
-    0 14px 28px rgba(0,0,0,0.35),
-    0 3px 0 rgba(255,255,255,0.14) inset,
-    0 -10px 16px rgba(0,0,0,0.22) inset;
-  position: relative;
-  overflow: hidden;
-  touch-action: none;
-  flex: 0 0 auto;
-}
-.spPicker3D.disabled{ opacity: 0.55; pointer-events:none; }
-.spPickerViewport{
-  width: 100%;
-  height: 100%;
-  outline: none;
-  display:grid;
-  place-items:center;
-  perspective: 980px;
-}
-.spPickerItems3D{
-  width: 100%;
-  height: 100%;
-  display:grid;
-  place-items:center;
-  transform-style: preserve-3d;
-}
-.spPickerItem3D{
-  position:absolute;
-  width: 100%;
-  text-align:center;
-  font-variant-numeric: tabular-nums;
-  font-weight: 950;
-  font-size: 34px;
-  letter-spacing: 0.6px;
-  color: rgba(255,255,255,0.20);
-  transform-origin: center center;
-  text-shadow: 0 2px 10px rgba(0,0,0,0.25);
-}
-.spPickerItem3D.active{
-  color: rgba(255,255,255,0.96);
-  text-shadow: 0 2px 14px rgba(0,0,0,0.38);
-}
-.spPickerShine{
-  position:absolute;
-  inset:-10px;
-  background:
-    radial-gradient(120px 220px at 30% 45%, rgba(255,255,255,0.10), transparent 60%),
-    radial-gradient(120px 220px at 70% 55%, rgba(99,179,237,0.10), transparent 60%);
-  pointer-events:none;
-  mix-blend-mode: screen;
-  opacity: 0.9;
-}
-.spPickerBar{
-  position:absolute;
-  left: 10px;
-  right: 10px;
-  top: 50%;
-  height: 46px;
-  transform: translateY(-50%);
-  border-radius: 999px;
-  background: rgba(255,255,255,0.10);
-  border: 1px solid rgba(255,255,255,0.14);
-  box-shadow:
-    0 0 0 1px rgba(0,0,0,0.18) inset,
-    0 10px 24px rgba(0,0,0,0.22);
-  pointer-events:none;
-}
-.spPickerFadeTop{
-  position:absolute;
-  left:0; right:0; top:0;
-  height: 46%;
-  background: linear-gradient(180deg, rgba(15,21,32,0.95), rgba(15,21,32,0.00));
-  pointer-events:none;
-}
-.spPickerFadeBottom{
-  position:absolute;
-  left:0; right:0; bottom:0;
-  height: 46%;
-  background: linear-gradient(0deg, rgba(15,21,32,0.95), rgba(15,21,32,0.00));
-  pointer-events:none;
-}
-
-/* Repeat button */
-.spRBtn{
-  min-width: 56px;
-  height: 56px;
-  border-radius: 16px;
-  border: 1px solid rgba(255,255,255,0.18);
-  background: rgba(0,0,0,0.18);
-  color: rgba(255,255,255,0.70);
-  font-weight: 950;
-  font-size: 18px;
-  letter-spacing: 0.5px;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow:
-    0 10px 22px rgba(0,0,0,0.30),
-    0 3px 0 rgba(255,255,255,0.12) inset,
-    0 -6px 10px rgba(0,0,0,0.20) inset;
-}
-.spRBtn.off{ opacity: 0.55; }
-.spRBtn.on{
-  color: rgba(10,14,22,0.98);
-  background: linear-gradient(180deg, rgba(170,220,255,1), rgba(99,179,237,1));
-  border-color: rgba(255,255,255,0.22);
-}
-.spRBtn:active{ transform: translateY(1px); }
-
-/* Bottom dock */
-.singlePlayerDockBottom{
-  position: fixed !important;
-  right: 14px !important;
-  left: auto !important;
-  bottom: calc(14px + env(safe-area-inset-bottom)) !important;
-  top: auto !important;
-  transform: none !important;
-  z-index: 10001 !important;
-  width: min(640px, calc(100% - 28px)) !important;
-  max-width: calc(100% - 28px) !important;
-  padding: 10px !important;
-  border-radius: 18px !important;
-  border: 1px solid rgba(255,255,255,0.12) !important;
-  background: rgba(0,0,0,0.24) !important;
-  overflow-x: auto !important;
-  overflow-y: hidden !important;
-  -webkit-overflow-scrolling: touch !important;
-  white-space: nowrap !important;
-}
-.singlePlayerDockRow{
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  flex-wrap: nowrap;
-  white-space: nowrap;
-}
-
-/* Segment styles */
-.mark{
-  display:inline;
-  padding: 0.10em 0.34em;
-  border-radius: 0.55em;
-  margin: 0 0.06em;
-  box-shadow:
-    0 0 0 1px rgba(255,255,255,0.10) inset,
-    0 18px 50px rgba(0,0,0,0.18);
-  text-shadow: 0 2px 16px rgba(0,0,0,0.40);
-  -webkit-box-decoration-break: clone;
-  box-decoration-break: clone;
-}
-.markRed{ color: var(--markRed) !important; background: var(--markRedBg); }
-.markGreen{ color: var(--markGreen) !important; background: var(--markGreenBg); }
-.fontRed{ color: var(--markRed) !important; }
-.fontGreen{ color: var(--markGreen) !important; }
-
-/* Body freeze when single player open */
-body.spOpen{
-  position: fixed;
-  width: 100%;
-  overflow: hidden;
-}
-
-/* Safari fallback */
-.isSafari .playerSticky,
-.isSafari .singlePlayerBackdrop,
-.isSafari .singlePlayerCard{
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-}
-.isSafari .row:hover{ filter: none !important; }
-
-@media (max-width:700px){
-  :root{
-    --w-no: 60px;
-    --w-ar: 1.2fr;
-    --w-tr: 1fr;
-    --w-de: 0fr;
-  }
-
-  .tableHeader, .row{
-    min-width:680px;
-    grid-template-columns: var(--w-no) var(--w-ar) var(--w-tr);
-  }
-  .colDe{ display:none; }
 }
