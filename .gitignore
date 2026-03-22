@@ -28,3 +28,6 @@ dist-ssr
 !public/audio/*.mp3
 !public/data/
 !public/data/*.json
+
+# local backups
+*.bak_*

@@ -282,9 +282,9 @@ html,body{
   position: fixed;
   inset: 0;
   z-index: 9999;
-  background: rgba(0,0,0,0.55);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: rgba(0,0,0,0.88);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   display: grid;
   place-items: center;
   padding: 14px;
@@ -296,7 +296,7 @@ html,body{
   position:absolute;
   inset:-60px;
   pointer-events:none;
-  opacity: 0.22;
+  opacity: 0.06;
   background:
     radial-gradient(900px 650px at 30% 25%, rgba(120,120,255,0.14), transparent 60%),
     radial-gradient(900px 650px at 70% 45%, rgba(255,120,120,0.12), transparent 60%);
@@ -310,12 +310,12 @@ html,body{
 
 .singlePlayerCard{
   width: min(1100px, 100%);
-  background: rgba(15,21,32,0.74);
+  background: rgba(15,21,32,0.96);
   border: 1px solid rgba(255,255,255,0.12);
   border-radius: 20px;
   box-shadow: 0 30px 90px rgba(0,0,0,0.55);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   padding: 14px;
   max-height: 86vh;
   overflow: auto;
@@ -586,4 +586,15 @@ html,body{
 }
 .isSafari .row:hover{
   filter: none !important;
+}
+/* Single player open: lock background */
+body.spOpen{
+  overflow: hidden;
+  touch-action: none;
+}
+
+body.spOpen .surahHeader,
+body.spOpen .playerCard,
+body.spOpen .tableWrap{
+  pointer-events: none;
 }
