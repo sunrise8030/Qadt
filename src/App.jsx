@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 // FILE: src/App.jsx
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import "./styles.css";
