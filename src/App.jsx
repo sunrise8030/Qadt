@@ -1,4 +1,6 @@
+// =========================
 // FILE: src/App.jsx
+// =========================
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import "./styles.css";
 
@@ -45,12 +47,7 @@ const SEGMENTS = {
     de: "So vergelten Wir den Gutes Tuenden.",
     tr: "“Kendilerini iyiliğe adamış, daima Allah’ı görüyormuşçasına ve Allah’ın kendilerini gördüğünün şuuru içinde davrananları işte böyle mükâfatlandırırız.”",
   },
-  23: {
-    color: "red",
-    ar: "مَعَاذَ ٱللَّهِ",
-    de: "Allah schütze mich (davor)!",
-    tr: "“Allah korusun!”",
-  },
+  23: { color: "red", ar: "مَعَاذَ ٱللَّهِ", de: "Allah schütze mich (davor)!", tr: "“Allah korusun!”" },
   34: {
     color: "green",
     ar: "إِنَّهُۥ هُوَ ٱلسَّمِيعُ ٱلْعَلِيمُ",
@@ -99,72 +96,22 @@ const SEGMENTS = {
     de: "außer daß Allah es wollte. Wir erhöhen, wen Wir wollen, um Rangstufen. Und über jedem, der Wissen besitzt, steht einer, der (noch mehr) weiß.",
     tr: "“fakat Allah ne dilerse o olur (ve Allah, bir şeyi dileyince onun sebeplerini de hazırlar). Biz, kimi dilersek onu böyle mertebe mertebe yükseltiriz. Ve her bir bilgi sahibinin üstünde daha iyi bir bilen (ve hepsinin üstünde her şeyi bilen olarak Allah) vardır.”",
   },
-  80: {
-    color: "green",
-    ar: "وَهُوَ خَيْرُ ٱلْحَٰكِمِينَ",
-    de: "Er ist der Beste derer, die Urteile fällen.",
-    tr: "“Allah, her zaman en hayırlı hükmü verendir.”",
-  },
-  86: {
-    color: "red",
-    ar: "إِنَّمَآ أَشْكُوا۟ بَثِّى وَحُزْنِىٓ إِلَى ٱللَّهِ",
-    de: "Ich klage meinen unerträglichen Kummer und meine Trauer nur Allah (allein)",
-    tr: "“Ben, bütün dertlerimi, keder ve hüznümü Allah’a arz ediyor, O’na şikâyette bulunuyorum.”",
-  },
+  80: { color: "green", ar: "وَهُوَ خَيْرُ ٱلْحَٰكِمِينَ", de: "Er ist der Beste derer, die Urteile fällen.", tr: "“Allah, her zaman en hayırlı hükmü verendir.”" },
+  86: { color: "red", ar: "إِنَّمَآ أَشْكُوا۟ بَثِّى وَحُزْنِىٓ إِلَى ٱللَّهِ", de: "Ich klage meinen unerträglichen Kummer und meine Trauer nur Allah (allein)", tr: "“Ben, bütün dertlerimi, keder ve hüznümü Allah’a arz ediyor, O’na şikâyette bulunuyorum.”" },
   87: {
     color: "green",
     ar: "وَلَا تَا۟يْـَٔسُوا۟ مِن رَّوْحِ ٱللَّهِ ۖ إِنَّهُۥ لَا يَا۟يْـَٔسُ مِن رَّوْحِ ٱللَّهِ إِلَّا ٱلْقَوْمُ ٱلْكَٰفِرُونَ",
     de: "Und gebt nicht die Hoffnung auf das Erbarmen Allahs auf. Es gibt die Hoffnung auf das Erbarmen Allahs nur das ungläubige Volk auf.",
     tr: "“Allah’ın rahmetinden asla ümidinizi kesmeyin. Şurası bir gerçek ki, O’na inanmayan kâfirler güruhu dışında hiç kimse Allah’ın rahmetinden ümit kesmez.”",
   },
-  88: {
-    color: "green",
-    ar: "إِنَّ ٱللَّهَ يَجْزِى ٱلْمُتَصَدِّقِينَ",
-    de: "Allah vergilt denjenigen, die Almosen geben.",
-    tr: "“Hiç kuşkusuz Allah, fazladan iyilikte bulunanları bol bol mükâfatlandırır.”",
-  },
-  90: {
-    color: "green",
-    ar: "إِنَّ ٱللَّهُ لَا يُضِيعُ أَجْرَ ٱلْمُحْسِنِينَ",
-    de: "Gewiß, Allah läßt den Lohn der Gutes Tuenden nicht verlorengehen.",
-    tr: "“Doğrusu şu ki, kim O’na karşı derin saygı duyar, O’na karşı gelmekten sakınır ve O’na itaatla birlikte başına gelenlere de sabrederse, hiç şüphesiz Allah, böyle iyiliğe adanmış ve O’nu görürcesine davranan kimselerin mükâfatını asla zayi etmeyiz.”",
-  },
-  91: {
-    color: "green",
-    ar: "تَٱللَّهِ لَقَدْ ءَاثَرَكَ ٱللَّهُ عَلَيْنَا وَإِن كُنَّا لَخَٰطِـِٔينَ",
-    de: "Bei Allah, Allah hat dich uns vorgezogen. Und wir haben wahrlich Verfehlungen begangen.",
-    tr: "“Allah’a yemin olsun ki, gerçekten Allah seni bize tercih etti; biz, başka değil, ancak bir yanlış içinde idik.”",
-  },
-  92: {
-    color: "green",
-    ar: "لَا تَثْرِيبَ عَلَيْكُمُ ٱلْيَوْمَ ۖ يَغْفِرُ ٱللَّهُ لَكُمْ ۖ وَهُوَ أَرْحَمُ ٱلرَّٰحِمِينَ",
-    de: "Keine Schelte soll heute über euch kommen. Allah vergibt euch, Er ist ja der Barmherzigste der Barmherzigen.",
-    tr: "“Hayır! Bugün size hiçbir kınama yok! (Ben hakkımı çoktan helâl ettim;) Allah da sizi affetsin. Çünkü O, bütün merhamet edenlerin üstünde mutlak merhamet sahibidir.”",
-  },
-  98: {
-    color: "green",
-    ar: "إِنَّهُۥ هُوَ ٱلْغَفُورُ ٱلرَّحِيمُ",
-    de: "Er ist ja der Allvergebende und Barmherzige.",
-    tr: "“Hiç şüphesiz O, Ğafûr (günahları çok bağışlayan)dır; Rahîm (bilhassa tevbe ile Kendisine yönelen mü’ min kullarına karşı hususî rahmeti pek bol olan)dır.”",
-  },
-  100: {
-    color: "green",
-    ar: "إِنَّ رَبِّى لَطِيفٌۭ لِّمَا يَشَآءُ ۚ إِنَّهُۥ هُوَ ٱلْعَلِيمُ ٱلْحَكِيمُ",
-    de: "Gewiß, mein Herr ist feinfühlig (in der Durchführung dessen), was Er will. Er ist ja der Allwissende und Allweise.",
-    tr: "“Gerçekten Rabbim, her ne dilerse onu pek güzel şekilde ve insanların göremeyeceği bir incelik içinde yerine getirir. Şüphesiz O, evet O, Alîm (her şeyi hakkıyla bilen)dir; Hakîm (bütün hüküm ve icraatında pek çok hikmetler bulunan)dır.”",
-  },
-  101: {
-    color: "red",
-    ar: "تَوَفَّنِى مُسْلِمًۭا وَأَلْحِقْنِى بِٱلصَّٰلِحِينَ",
-    de: "Berufe mich als (Dir) ergeben ab und nimm mich unter die Rechtschaffenen auf.",
-    tr: "“Beni Müslüman olarak vefat ettir ve beni salihler içine kat!”",
-  },
-  108: {
-    color: "green",
-    ar: "قُلْ هَٰذِهِۦ سَبِيلِىٓ أَدْعُوٓا۟ إِلَى ٱللَّهِ ۚ عَلَىٰ بَصِيرَةٍ أَنَا۠ وَمَنِ ٱتَّبَعَنِى ۖ وَسُبْحَٰنَ ٱللَّهِ وَمَآ أَنَا۠ مِنَ ٱلْمُشْرِكِينَ",
-    de: "Sag: Das ist mein Weg: Ich rufe zu Allah aufgrund eines sichtbaren Hinweises, ich und diejenigen, die mir folgen. Preis sei Allah! Und ich gehöre nicht zu den Götzendienern.",
-    tr: "“İşte benim (iman, ihlâs ve Tevhid) yolum: Ben, (körü körüne ve taklide dayalı olarak değil,) görerek, delile dayanarak ve insanların idrakine hitap ederek Allah’a çağırıyorum: ben ve bana tâbi olanlar. Ve Allah’ı şirkin her türlüsünden tenzih ederim, asla O’na ortak tanıyanlardan değilim ben.”",
-  },
+  88: { color: "green", ar: "إِنَّ ٱللَّهَ يَجْزِى ٱلْمُتَصَدِّقِينَ", de: "Allah vergilt denjenigen, die Almosen geben.", tr: "“Hiç kuşkusuz Allah, fazladan iyilikte bulunanları bol bol mükâfatlandırır.”" },
+  90: { color: "green", ar: "إِنَّ ٱللَّهُ لَا يُضِيعُ أَجْرَ ٱلْمُحْسِنِينَ", de: "Gewiß, Allah läßt den Lohn der Gutes Tuenden nicht verlorengehen.", tr: "“Doğrusu şu ki, kim O’na karşı derin saygı duyar, O’na karşı gelmekten sakınır ve O’na itaatla birlikte başına gelenlere de sabrederse, hiç şüphesiz Allah, böyle iyiliğe adanmış ve O’nu görürcesine davranan kimselerin mükâfatını asla zayi etmez.”" },
+  91: { color: "green", ar: "تَٱللَّهِ لَقَدْ ءَاثَرَكَ ٱللَّهُ عَلَيْنَا وَإِن كُنَّا لَخَٰطِـِٔينَ", de: "Bei Allah, Allah hat dich uns vorgezogen. Und wir haben wahrlich Verfehlungen begangen.", tr: "“Allah’a yemin olsun ki, gerçekten Allah seni bize tercih etti; biz, başka değil, ancak bir yanlış içinde idik.”" },
+  92: { color: "green", ar: "لَا تَثْرِيبَ عَلَيْكُمُ ٱلْيَوْمَ ۖ يَغْفِرُ ٱللَّهُ لَكُمْ ۖ وَهُوَ أَرْحَمُ ٱلرَّٰحِمِينَ", de: "Keine Schelte soll heute über euch kommen. Allah vergibt euch, Er ist ja der Barmherzigste der Barmherzigen.", tr: "“Hayır! Bugün size hiçbir kınama yok! (Ben hakkımı çoktan helâl ettim;) Allah da sizi affetsin. Çünkü O, bütün merhamet edenlerin üstünde mutlak merhamet sahibidir.”" },
+  98: { color: "green", ar: "إِنَّهُۥ هُوَ ٱلْغَفُورُ ٱلرَّحِيمُ", de: "Er ist ja der Allvergebende und Barmherzige.", tr: "“Hiç şüphesiz O, Ğafûr (günahları çok bağışlayan)dır; Rahîm (bilhassa tevbe ile Kendisine yönelen mü’ min kullarına karşı hususî rahmeti pek bol olan)dır.”" },
+  100: { color: "green", ar: "إِنَّ رَبِّى لَطِيفٌۭ لِّمَا يَشَآءُ ۚ إِنَّهُۥ هُوَ ٱلْعَلِيمُ ٱلْحَكِيمُ", de: "Gewiß, mein Herr ist feinfühlig (in der Durchführung dessen), was Er will. Er ist ja der Allwissende und Allweise.", tr: "“Gerçekten Rabbim, her ne dilerse onu pek güzel şekilde ve insanların göremeyeceği bir incelik içinde yerine getirir. Şüphesiz O, evet O, Alîm (her şeyi hakkıyla bilen)dir; Hakîm (bütün hüküm ve icraatında pek çok hikmetler bulunan)dır.”" },
+  101: { color: "red", ar: "تَوَفَّنِى مُسْلِمًۭا وَأَلْحِقْنِى بِٱلصَّٰلِحِينَ", de: "Berufe mich als (Dir) ergeben ab und nimm mich unter die Rechtschaffenen auf.", tr: "“Beni Müslüman olarak vefat ettir ve beni salihler içine kat!”" },
+  108: { color: "green", ar: "قُلْ هَٰذِهِۦ سَبِيلِىٓ أَدْعُوٓا۟ إِلَى ٱللَّهِ ۚ عَلَىٰ بَصِيرَةٍ أَنَا۠ وَمَنِ ٱتَّبَعَنِى ۖ وَسُبْحَٰنَ ٱللَّهِ وَمَآ أَنَا۠ مِنَ ٱلْمُشْرِكِينَ", de: "Sag: Das ist mein Weg: Ich rufe zu Allah aufgrund eines sichtbaren Hinweises, ich und diejenigen, die mir folgen. Preis sei Allah! Und ich gehöre nicht zu den Götzendienern.", tr: "“İşte benim (iman, ihlâs ve Tevhid) yolum: Ben, (körü körüne ve taklide dayalı olarak değil,) görerek, delile dayanarak ve insanların idrakine hitap ederek Allah’a çağırıyorum: ben ve bana tâbi olanlar. Ve Allah’ı şirkin her türlüsünden tenzih ederim, asla O’na ortak tanıyanlardan değilim ben.”" },
 };
 
 function resolvePublicUrl(path) {
@@ -185,6 +132,8 @@ function tactilePulse(ms = 8) {
     }
   } catch {}
 }
+
+/* active verse index */
 
 function isMonotonicNonDecreasing(arr) {
   for (let i = 1; i < arr.length; i += 1) {
@@ -249,6 +198,7 @@ function findActiveVerseIndexLinearOverlapSafe(verses, t) {
   return closest;
 }
 
+/* sticky scroll helper */
 function getStickyOverlayTopPx() {
   const el = document.querySelector(".playerSticky");
   if (!el) return null;
@@ -274,6 +224,7 @@ function ensureRowVisible(el, padding = 10) {
   if (above || below) el.scrollIntoView({ behavior: "smooth", block: "nearest" });
 }
 
+/* JSON tolerant */
 function parseJsonTolerant(text, urlForMsg = "") {
   const raw = String(text ?? "");
   let s = raw.replace(/^\uFEFF/, "").trim();
@@ -304,6 +255,8 @@ function parseJsonTolerant(text, urlForMsg = "") {
     throw new Error(`JSON parse failed | url=${urlForMsg} | msg=${msg}`);
   }
 }
+
+/* segment marking */
 
 function stripOuterQuotes(s) {
   const t = String(s ?? "").trim();
@@ -505,8 +458,8 @@ function markSegmentUncached(text, ayah, lang) {
   const sN = normalizeCommon(s);
   const nN = normalizeCommon(needle);
   if (!sN || !nN) return s;
-  if (sN.includes(nN)) return <span className={cls}>{s}</span>;
 
+  if (sN.includes(nN)) return <span className={cls}>{s}</span>;
   return s;
 }
 
@@ -530,6 +483,8 @@ function useMarkSegmentCached() {
 
   return { markSegment, clearCache: clear };
 }
+
+/* UI */
 
 function MinimalPlayerBar({ isPlaying, onPlayPause, onPrev, onNext, onOpenSingle }) {
   return (
@@ -557,6 +512,9 @@ function MinimalPlayerBar({ isPlaying, onPlayPause, onPrev, onNext, onOpenSingle
   );
 }
 
+/**
+ * iOS-like vertical wheel (3D) - accel + inertia tuned
+ */
 function IOSPickerWheelVertical3D({ disabled, value, onStep }) {
   const ref = useRef(null);
 
@@ -571,7 +529,7 @@ function IOSPickerWheelVertical3D({ disabled, value, onStep }) {
   const lastVibeRef = useRef(0);
 
   const STEP_PX = 8;
-  const MAX_STEPS_PER_TICK = 12;
+  const MAX_STEPS_PER_TICK = 18;
 
   useEffect(() => {
     return () => {
@@ -615,13 +573,18 @@ function IOSPickerWheelVertical3D({ disabled, value, onStep }) {
 
   const startInertia = () => {
     const v0 = velRef.current;
+
+    // boost fling inertia
+    velRef.current = v0 * 2.8;
+
     if (!Number.isFinite(v0) || Math.abs(v0) < 0.03) {
       stop();
       return;
     }
 
-    const DECAY = 0.0032;
-    const MAX_MS = 1400;
+    const DECAY = 0.0016;
+    const MAX_MS = 2600;
+
     const startTs = performance.now();
     let last = performance.now();
 
@@ -668,7 +631,12 @@ function IOSPickerWheelVertical3D({ disabled, value, onStep }) {
     lastTsRef.current = now;
 
     velRef.current = dy / dt;
-    accumPxRef.current += dy * 1.35;
+
+    // acceleration: faster drag => faster stepping
+    const sp = Math.abs(velRef.current); // px/ms
+    const mult = clamp(1 + sp * 26, 1, 7.5);
+
+    accumPxRef.current += dy * mult;
     tickSteps();
   };
 
@@ -683,7 +651,7 @@ function IOSPickerWheelVertical3D({ disabled, value, onStep }) {
     stop();
 
     const dy = e.deltaY;
-    const steps = clamp(Math.round(Math.abs(dy) / 12), 1, 18);
+    const steps = clamp(Math.round(Math.abs(dy) / 9), 1, 28);
     const dir = dy < 0 ? +1 : -1;
 
     for (let i = 0; i < steps; i += 1) onStep(dir);
@@ -694,7 +662,7 @@ function IOSPickerWheelVertical3D({ disabled, value, onStep }) {
       tactilePulse(8);
     }
 
-    velRef.current = clamp(dy / 520, -2.2, 2.2);
+    velRef.current = clamp(dy / 360, -3.6, 3.6);
     startInertia();
   };
 
@@ -770,6 +738,7 @@ function SinglePlayerPanel({
 }) {
   useEffect(() => {
     if (!open) return;
+
     const onKey = (e) => {
       if (e.key === "Escape") onClose();
       if (e.code === "Space") {
@@ -789,6 +758,7 @@ function SinglePlayerPanel({
         onToggleRepeat();
       }
     };
+
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose, onPlayPause, onPrev, onNext, onToggleRepeat]);
@@ -799,7 +769,7 @@ function SinglePlayerPanel({
 
   return (
     <div className="singlePlayerBackdrop" role="dialog" aria-modal="true" aria-label="Single Player">
-      <div className="singlePlayerCard">
+      <div className="singlePlayerCard" role="document">
         <div className="singlePlayerLines">
           <div className="singlePlayerLine singlePlayerLineAr" dir="rtl">
             {markSegment((verse?.ar || "—").trim(), ay, "ar")}
@@ -823,12 +793,7 @@ function SinglePlayerPanel({
             ◀
           </button>
 
-          <button
-            className="spBtn spBtnPrimary"
-            type="button"
-            onClick={onPlayPause}
-            aria-label="Play/Pause"
-          >
+          <button className="spBtn spBtnPrimary" type="button" onClick={onPlayPause} aria-label="Play/Pause">
             {isPlaying ? "⏸" : "▶"}
           </button>
 
@@ -881,19 +846,12 @@ const VerseRow = React.memo(function VerseRow({ v, idx, active, onRowClick, setR
       </div>
 
       <div className="cell colDe">{markSegment(deText, ay, "de")}</div>
-
       <div className="cell colTr">{markSegment(trText, ay, "tr")}</div>
     </button>
   );
 });
 
-const VersesTable = React.memo(function VersesTable({
-  verses,
-  activeIndex,
-  onRowClick,
-  setRowRef,
-  markSegment,
-}) {
+const VersesTable = React.memo(function VersesTable({ verses, activeIndex, onRowClick, setRowRef, markSegment }) {
   return (
     <div className="tableWrap" role="region" aria-label="Verses">
       <div className="tableHeader">
@@ -935,6 +893,7 @@ export default function App() {
   const [activeIndex, setActiveIndex] = useState(-1);
   const [singleOn, setSingleOn] = useState(true);
 
+  // repeat: 0 off, 1 => 1 tekrar, 2 => 2 tekrar
   const [repeatMode, setRepeatMode] = useState(0);
   const repeatStateRef = useRef({ idx: -1, done: 0, armed: true, lastFire: 0 });
 
@@ -971,6 +930,7 @@ export default function App() {
     isPlayingRef.current = isPlaying;
   }, [verses, activeIndex, duration, isPlaying]);
 
+  // Lock background while single player open (scroll freeze)
   useEffect(() => {
     if (!singleOn) {
       document.body.classList.remove("spOpen");
@@ -991,14 +951,8 @@ export default function App() {
     };
   }, [singleOn]);
 
-  const audioSrc = useMemo(
-    () => (selectedSurah ? resolvePublicUrl(selectedSurah.audioUrl) : ""),
-    [selectedSurah]
-  );
-  const versesSrc = useMemo(
-    () => (selectedSurah ? resolvePublicUrl(selectedSurah.versesUrl) : ""),
-    [selectedSurah]
-  );
+  const audioSrc = useMemo(() => (selectedSurah ? resolvePublicUrl(selectedSurah.audioUrl) : ""), [selectedSurah]);
+  const versesSrc = useMemo(() => (selectedSurah ? resolvePublicUrl(selectedSurah.versesUrl) : ""), [selectedSurah]);
 
   const { starts, ends, monotonic } = useMemo(() => {
     const s = [];
@@ -1015,6 +969,7 @@ export default function App() {
     return { starts: s, ends: e, monotonic: ok };
   }, [verses]);
 
+  // Load verses
   useEffect(() => {
     let cancelled = false;
 
@@ -1041,10 +996,7 @@ export default function App() {
 
         if (!res.ok) {
           throw new Error(
-            `Fetch failed: ${res.status} ${res.statusText} | url=${versesSrc} | body=${text.slice(
-              0,
-              160
-            )}`
+            `Fetch failed: ${res.status} ${res.statusText} | url=${versesSrc} | body=${text.slice(0, 160)}`
           );
         }
 
@@ -1067,6 +1019,7 @@ export default function App() {
     };
   }, [versesSrc, clearCache]);
 
+  // Audio listeners (tick throttled)
   useEffect(() => {
     const a = audioRef.current;
     if (!a) return;
@@ -1196,15 +1149,15 @@ export default function App() {
     });
   }, [seekTo]);
 
+  // Active index update + repeat engine (tick-driven)
   useEffect(() => {
     const a = audioRef.current;
     if (!a) return;
 
+    // Active verse
     if (verses.length) {
       const t = currentTimeRef.current;
-      const idx = monotonic
-        ? findActiveVerseIndexBinary(starts, ends, t)
-        : findActiveVerseIndexLinearOverlapSafe(verses, t);
+      const idx = monotonic ? findActiveVerseIndexBinary(starts, ends, t) : findActiveVerseIndexLinearOverlapSafe(verses, t);
 
       if (idx !== -1 && idx !== activeIndexRef.current) {
         setActiveIndex(idx);
@@ -1213,6 +1166,7 @@ export default function App() {
       }
     }
 
+    // Repeat engine
     if (!verses.length) return;
     if (repeatMode <= 0) return;
 
@@ -1262,11 +1216,7 @@ export default function App() {
     currentTimeRef.current = s;
   }, [tick, verses, monotonic, starts, ends, repeatMode]);
 
-  const activeVerse = useMemo(
-    () => (activeIndex >= 0 ? verses[activeIndex] : null),
-    [activeIndex, verses]
-  );
-
+  const activeVerse = useMemo(() => (activeIndex >= 0 ? verses[activeIndex] : null), [activeIndex, verses]);
   const dialDisabled = !verses.length;
 
   const header = selectedSurah ? (
@@ -1351,4 +1301,529 @@ export default function App() {
       </main>
     </div>
   );
+}
+
+
+// =========================
+// FILE: src/styles.css
+// =========================
+:root{
+  --bg:#0b0f16;
+  --panel:#0f1520;
+  --border:rgba(255,255,255,0.08);
+  --text:rgba(255,255,255,0.92);
+  --muted:rgba(255,255,255,0.62);
+  --accent:rgba(99,179,237,1);
+  --danger:rgba(255,120,120,0.18);
+
+  --w-no: 70px;
+  --w-ar: 1.1fr;
+  --w-de: 1fr;
+  --w-tr: 1fr;
+
+  --markRed: rgba(235, 78, 62, 1);
+  --markRedBg: rgba(235, 78, 62, 0.18);
+  --markGreen: rgba(82, 210, 140, 1);
+  --markGreenBg: rgba(82, 210, 140, 0.16);
+}
+
+*{ box-sizing:border-box; }
+
+html,body{
+  height:100%;
+  margin:0;
+  background:
+    radial-gradient(1200px 800px at 30% 15%, rgba(120,120,255,0.12), transparent 55%),
+    radial-gradient(1200px 800px at 70% 35%, rgba(255,120,120,0.10), transparent 55%),
+    var(--bg);
+  color:var(--text);
+  font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial,"Noto Sans","Apple Color Emoji","Segoe UI Emoji";
+}
+
+.muted{ color:var(--muted); }
+.mono{ font-variant-numeric:tabular-nums; }
+
+.appShell{ display:grid; grid-template-columns: 1fr; min-height:100vh; }
+.appShellSolo{ grid-template-columns: 1fr !important; }
+
+.content{ padding:16px; }
+
+/* header */
+.surahHeader{
+  border:1px solid var(--border);
+  background:rgba(15,21,32,0.55);
+  border-radius:16px;
+  padding:14px 16px;
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:10px;
+}
+.surahTitle{ margin:0; font-size:20px; }
+.surahSub{ color:var(--muted); margin-top:3px; }
+.surahHeaderRight{ font-size:18px; align-self:start; }
+.surahBadges{ grid-column:1 / -1; display:flex; gap:8px; flex-wrap:wrap; margin-top:6px; }
+.badge{
+  font-size:12px;
+  color:var(--muted);
+  border:1px solid var(--border);
+  background:rgba(0,0,0,0.18);
+  padding:6px 10px;
+  border-radius:999px;
+}
+
+.errorBox{
+  margin-top:12px;
+  border:1px solid rgba(255,120,120,0.35);
+  background:var(--danger);
+  border-radius:12px;
+  padding:10px 12px;
+}
+
+/* Player bar */
+.playerCard{
+  margin-top:14px;
+  border:1px solid var(--border);
+  background:rgba(15,21,32,0.55);
+  border-radius:16px;
+  padding:12px;
+  position:relative;
+}
+.playerSticky{
+  position:sticky;
+  top:10px;
+  z-index:20;
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+}
+.playerControls{ display:grid; gap:10px; }
+
+.liveTimeBar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  flex-wrap:wrap;
+}
+.liveTime{ display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; }
+.liveActions{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.liveLabel{
+  font-size:12px;
+  color:var(--muted);
+  border:1px solid var(--border);
+  background:rgba(0,0,0,0.18);
+  padding:4px 8px;
+  border-radius:999px;
+}
+
+.btnSmall,.btnPrimary{
+  border:1px solid var(--border);
+  background:rgba(0,0,0,0.22);
+  color:var(--text);
+  cursor:pointer;
+  border-radius:10px;
+}
+.btnSmall{ padding:8px 10px; }
+.btnPrimary{
+  padding:12px 18px;
+  border-radius:12px;
+  font-size:14px;
+  font-weight:800;
+  border-color: rgba(99,179,237,0.35);
+  box-shadow: 0 0 0 2px rgba(99,179,237,0.10) inset;
+}
+.btnSmall:hover,.btnPrimary:hover{ border-color:rgba(255,255,255,0.16); }
+
+/* Single Player button */
+.btnSinglePlayer{
+  padding: 14px 16px;
+  border-radius: 14px;
+  font-size: 15px;
+  font-weight: 950;
+  cursor: pointer;
+  color: rgba(10,14,22,0.98);
+  border: 1px solid rgba(255,255,255,0.18);
+  background: linear-gradient(180deg, rgba(170,220,255,1), rgba(99,179,237,1));
+  box-shadow:
+    0 10px 22px rgba(0,0,0,0.35),
+    0 3px 0 rgba(255,255,255,0.22) inset,
+    0 -6px 10px rgba(0,0,0,0.25) inset;
+  transform: translateY(0);
+}
+.btnSinglePlayer:hover{ filter: brightness(1.06); }
+.btnSinglePlayer:active{
+  transform: translateY(2px);
+  box-shadow:
+    0 6px 14px rgba(0,0,0,0.30),
+    0 2px 0 rgba(255,255,255,0.18) inset,
+    0 -4px 8px rgba(0,0,0,0.22) inset;
+}
+
+/* Table */
+.tableWrap{
+  margin-top:14px;
+  border:1px solid var(--border);
+  background:rgba(15,21,32,0.55);
+  border-radius:16px;
+  overflow:auto;
+}
+.tableHeader, .row{ min-width:980px; }
+
+.tableHeader{
+  display:grid;
+  grid-template-columns: var(--w-no) var(--w-ar) var(--w-de) var(--w-tr);
+  padding:12px;
+  border-bottom:1px solid var(--border);
+  color:var(--muted);
+  font-size:13px;
+  position:sticky;
+  top:0;
+  background:rgba(15,21,32,0.90);
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+  z-index:2;
+}
+
+.row{
+  display:grid;
+  grid-template-columns: var(--w-no) var(--w-ar) var(--w-de) var(--w-tr);
+  border-bottom:1px solid rgba(255,255,255,0.06);
+  padding:10px 12px;
+  text-align:left;
+  color:inherit;
+  cursor:pointer;
+  align-items: stretch;
+}
+.tableBody .row:nth-child(odd){ background-color: rgba(255,255,255,0.05); }
+.tableBody .row:nth-child(even){ background-color: rgba(0,0,0,0.18); }
+.row:hover{ filter: brightness(1.06); }
+.row.active{
+  background-color: rgba(99,179,237,0.14) !important;
+  box-shadow: 0 0 0 1px rgba(99,179,237,0.35) inset;
+}
+
+.cell{
+  padding-right:10px;
+  border-right:1px solid rgba(255,255,255,0.06);
+  display:flex;
+  align-items:flex-start;
+  min-height: 100%;
+  white-space: normal;
+}
+.cell:last-child{ border-right:none; }
+
+.colNo{ color:var(--muted); font-variant-numeric:tabular-nums; }
+.colAr{
+  display:block !important;
+  direction: rtl;
+  unicode-bidi: isolate-override;
+  text-align: right;
+  font-size: 18px;
+  line-height: 1.55;
+  padding-left: 12px;
+  font-family: "Noto Naskh Arabic","Amiri","Scheherazade New","Noto Sans Arabic", serif;
+  white-space: normal;
+}
+.colDe, .colTr{
+  font-size:14px;
+  line-height:1.5;
+  text-align:left;
+}
+
+/* Single line in table for TR/DE (no paragraph look) */
+.colDe, .colTr{
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Single Player overlay */
+@keyframes spBackdropIn{
+  0% { opacity: 0; transform: translateY(10px); }
+  100% { opacity: 1; transform: translateY(0px); }
+}
+
+.singlePlayerBackdrop{
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0,0,0,0.78); /* less transparent */
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  display: grid;
+  place-items: center;
+  padding: 14px;
+  animation: spBackdropIn 420ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  overflow: hidden;
+  pointer-events: auto;
+}
+
+.singlePlayerCard{
+  width: min(1100px, 100%);
+  background: rgba(15,21,32,0.86);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 20px;
+  box-shadow: 0 30px 90px rgba(0,0,0,0.55);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 14px;
+  max-height: 86vh;
+  overflow: auto;
+}
+
+.singlePlayerLines{ display: grid; gap: 10px; }
+
+.singlePlayerLine{
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 16px;
+  padding: 12px 14px;
+  background: rgba(0,0,0,0.14);
+}
+.singlePlayerLines > :nth-child(odd){ background: rgba(255,255,255,0.06); }
+
+.singlePlayerLineAr{
+  direction: rtl;
+  unicode-bidi: isolate-override;
+  text-align: right;
+  font-family: "Noto Naskh Arabic","Amiri","Scheherazade New","Noto Sans Arabic", serif;
+  font-size: clamp(44px, 7.0vw, 78px);
+  line-height: 1.75;
+  white-space: pre-wrap;
+}
+.singlePlayerLineDe,
+.singlePlayerLineTr{
+  font-size: clamp(26px, 4.0vw, 40px);
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+.singlePlayerLineDe{ color: rgba(255,255,255,0.82); }
+
+/* Buttons */
+.spBtn{
+  min-width: 66px;
+  height: 66px;
+  padding: 0 16px;
+  border-radius: 18px;
+  cursor:pointer;
+  font-weight: 950;
+  font-size: 26px;
+  color: rgba(10,14,22,0.98);
+  border: 1px solid rgba(255,255,255,0.22);
+  background: linear-gradient(180deg, rgba(210,235,255,1), rgba(145,205,250,1));
+  box-shadow:
+    0 10px 22px rgba(0,0,0,0.38),
+    0 3px 0 rgba(255,255,255,0.22) inset,
+    0 -6px 10px rgba(0,0,0,0.22) inset;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  touch-action: manipulation;
+}
+.spBtn:active{
+  transform: translateY(2px);
+  box-shadow:
+    0 6px 14px rgba(0,0,0,0.32),
+    0 2px 0 rgba(255,255,255,0.18) inset,
+    0 -4px 8px rgba(0,0,0,0.20) inset;
+}
+.spBtnPrimary{
+  min-width: 118px;
+  height: 74px;
+  font-size: 30px;
+  background: linear-gradient(180deg, rgba(200,255,220,1), rgba(110,230,165,1));
+}
+.spBtnClose{
+  background: linear-gradient(180deg, rgba(255,220,220,1), rgba(255,150,150,1));
+}
+
+/* Wheel */
+.spPicker3D{
+  width: 120px;
+  height: 160px;
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,0.16);
+  background: rgba(0,0,0,0.18);
+  box-shadow:
+    0 14px 28px rgba(0,0,0,0.35),
+    0 3px 0 rgba(255,255,255,0.14) inset,
+    0 -10px 16px rgba(0,0,0,0.22) inset;
+  position: relative;
+  overflow: hidden;
+  touch-action: none;
+  flex: 0 0 auto;
+}
+.spPicker3D.disabled{ opacity: 0.55; pointer-events:none; }
+.spPickerViewport{
+  width: 100%;
+  height: 100%;
+  outline: none;
+  display:grid;
+  place-items:center;
+  perspective: 980px;
+}
+.spPickerItems3D{
+  width: 100%;
+  height: 100%;
+  display:grid;
+  place-items:center;
+  transform-style: preserve-3d;
+}
+.spPickerItem3D{
+  position:absolute;
+  width: 100%;
+  text-align:center;
+  font-variant-numeric: tabular-nums;
+  font-weight: 950;
+  font-size: 34px;
+  letter-spacing: 0.6px;
+  color: rgba(255,255,255,0.20);
+  transform-origin: center center;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.25);
+}
+.spPickerItem3D.active{
+  color: rgba(255,255,255,0.96);
+  text-shadow: 0 2px 14px rgba(0,0,0,0.38);
+}
+.spPickerShine{
+  position:absolute;
+  inset:-10px;
+  background:
+    radial-gradient(120px 220px at 30% 45%, rgba(255,255,255,0.10), transparent 60%),
+    radial-gradient(120px 220px at 70% 55%, rgba(99,179,237,0.10), transparent 60%);
+  pointer-events:none;
+  mix-blend-mode: screen;
+  opacity: 0.9;
+}
+.spPickerBar{
+  position:absolute;
+  left: 10px;
+  right: 10px;
+  top: 50%;
+  height: 46px;
+  transform: translateY(-50%);
+  border-radius: 999px;
+  background: rgba(255,255,255,0.10);
+  border: 1px solid rgba(255,255,255,0.14);
+  box-shadow:
+    0 0 0 1px rgba(0,0,0,0.18) inset,
+    0 10px 24px rgba(0,0,0,0.22);
+  pointer-events:none;
+}
+.spPickerFadeTop{
+  position:absolute;
+  left:0; right:0; top:0;
+  height: 46%;
+  background: linear-gradient(180deg, rgba(15,21,32,0.95), rgba(15,21,32,0.00));
+  pointer-events:none;
+}
+.spPickerFadeBottom{
+  position:absolute;
+  left:0; right:0; bottom:0;
+  height: 46%;
+  background: linear-gradient(0deg, rgba(15,21,32,0.95), rgba(15,21,32,0.00));
+  pointer-events:none;
+}
+
+/* Repeat button */
+.spRBtn{
+  min-width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(0,0,0,0.18);
+  color: rgba(255,255,255,0.70);
+  font-weight: 950;
+  font-size: 18px;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow:
+    0 10px 22px rgba(0,0,0,0.30),
+    0 3px 0 rgba(255,255,255,0.12) inset,
+    0 -6px 10px rgba(0,0,0,0.20) inset;
+}
+.spRBtn.off{ opacity: 0.55; }
+.spRBtn.on{
+  color: rgba(10,14,22,0.98);
+  background: linear-gradient(180deg, rgba(170,220,255,1), rgba(99,179,237,1));
+  border-color: rgba(255,255,255,0.22);
+}
+.spRBtn:active{ transform: translateY(1px); }
+
+/* Bottom dock */
+.singlePlayerDockBottom{
+  position: fixed !important;
+  right: 14px !important;
+  left: auto !important;
+  bottom: calc(14px + env(safe-area-inset-bottom)) !important;
+  top: auto !important;
+  transform: none !important;
+  z-index: 10001 !important;
+  width: min(640px, calc(100% - 28px)) !important;
+  max-width: calc(100% - 28px) !important;
+  padding: 10px !important;
+  border-radius: 18px !important;
+  border: 1px solid rgba(255,255,255,0.12) !important;
+  background: rgba(0,0,0,0.24) !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  -webkit-overflow-scrolling: touch !important;
+  white-space: nowrap !important;
+}
+.singlePlayerDockRow{
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+}
+
+/* Segment styles */
+.mark{
+  display:inline;
+  padding: 0.10em 0.34em;
+  border-radius: 0.55em;
+  margin: 0 0.06em;
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.10) inset,
+    0 18px 50px rgba(0,0,0,0.18);
+  text-shadow: 0 2px 16px rgba(0,0,0,0.40);
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+.markRed{ color: var(--markRed) !important; background: var(--markRedBg); }
+.markGreen{ color: var(--markGreen) !important; background: var(--markGreenBg); }
+.fontRed{ color: var(--markRed) !important; }
+.fontGreen{ color: var(--markGreen) !important; }
+
+/* Body freeze when single player open */
+body.spOpen{
+  position: fixed;
+  width: 100%;
+  overflow: hidden;
+}
+
+/* Safari fallback */
+.isSafari .playerSticky,
+.isSafari .singlePlayerBackdrop,
+.isSafari .singlePlayerCard{
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+.isSafari .row:hover{ filter: none !important; }
+
+@media (max-width:700px){
+  :root{
+    --w-no: 60px;
+    --w-ar: 1.2fr;
+    --w-tr: 1fr;
+    --w-de: 0fr;
+  }
+
+  .tableHeader, .row{
+    min-width:680px;
+    grid-template-columns: var(--w-no) var(--w-ar) var(--w-tr);
+  }
+  .colDe{ display:none; }
 }
