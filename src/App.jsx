@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 // FILE: src/App.jsx
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import "./styles.css";
@@ -1378,3 +1379,16 @@ export default function App() {
     </div>
   );
 }
+=======
+import React from "react";
+import "./styles.css";
+
+export default function App() {
+  return (
+    <div className="content">
+      <h2 style={{ marginTop: 0 }}>App OK ✅</h2>
+      <p>Default export restored. Now you can paste your full App.jsx again.</p>
+    </div>
+  );
+}
+>>>>>>> 9e96f7d (fix: restore default export in App.jsx)
