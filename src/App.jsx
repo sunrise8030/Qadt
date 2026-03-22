@@ -504,7 +504,6 @@ function markSegmentUncached(text, ayah, lang) {
   const direct = splitAndMarkFirst(s, needle, cls);
   if (direct !== s) return direct;
 
-  // tolerant: if "close enough" match => color whole line (only if included)
   const sN = normalizeCommon(s);
   const nN = normalizeCommon(needle);
   if (!sN || !nN) return s;
@@ -562,7 +561,10 @@ function MinimalPlayerBar({ isPlaying, onPlayPause, onPrev, onNext, onOpenSingle
 }
 
 /**
- * ✅ FAST wheel: faster drag => faster scroll + strong inertia
+ * ✅ FAST wheel (clean):
+ * - drag acceleration
+ * - short inertia (stops quickly)
+ * - no inertia if released slowly
  */
 function IOSPickerWheelVertical3D({ disabled, value, onStep }) {
   const ref = useRef(null);
@@ -571,20 +573,25 @@ function IOSPickerWheelVertical3D({ disabled, value, onStep }) {
   const lastYRef = useRef(0);
   const lastTsRef = useRef(0);
 
-  // velocity in px/ms
+  // velocity px/ms
   const velRef = useRef(0);
   const accumPxRef = useRef(0);
   const rafRef = useRef(0);
   const lastVibeRef = useRef(0);
 
-  // feel knobs
-  const STEP_PX = 10; // smaller => more sensitive
+  const STEP_PX = 10;               // smaller = more sensitive
   const MAX_STEPS_PER_FRAME = 14;
-  const MIN_VEL_TO_INERTIA = 0.035;
+
+  const RELEASE_MIN_V = 0.12;       // slow release => no inertia
+  const VEL_LIMIT = 1.8;            // clamp speed
+  const DECAY = 0.009;              // friction
+  const STOP_V = 0.10;              // stop threshold
+  const MAX_MS = 650;               // hard stop duration
 
   useEffect(() => {
     return () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      rafRef.current = 0;
     };
   }, []);
 
@@ -623,70 +630,26 @@ function IOSPickerWheelVertical3D({ disabled, value, onStep }) {
     if (did) vibe(8);
   };
 
- const startInertia = () => {
-  const v0 = velRef.current;
+  const startInertia = () => {
+    const v0 = velRef.current;
 
-  // ✅ düşük hızda bırakıldıysa: inertia yok, direkt dur
-  if (!Number.isFinite(v0) || Math.abs(v0) < 0.12) {
-    stop();
-    return;
-  }
-
-  // ✅ hız limit (çok hızlı fırlamasın)
-  velRef.current = clamp(v0, -1.8, 1.8);
-
-  // ✅ daha güçlü fren (bırakınca kısa sürede dursun)
-  const DECAY = 0.009;      // büyüdükçe daha hızlı durur
-  const STOP_V = 0.10;      // bunun altına inince dur
-  const MAX_MS = 650;       // maksimum spin süresi
-
-  const startTs = performance.now();
-  let last = startTs;
-
-  const frame = () => {
-    const now = performance.now();
-    const dt = now - last;
-    last = now;
-
-    const sign = Math.sign(velRef.current);
-    const sp = Math.abs(velRef.current);
-
-    // friksiyon
-    const nextSp = Math.max(0, sp * (1 - DECAY * dt));
-    velRef.current = sign * nextSp;
-
-    accumPxRef.current += velRef.current * dt;
-    tickSteps();
-
-    // ✅ stop koşulları
-    if (nextSp < STOP_V || now - startTs > MAX_MS) {
+    if (!Number.isFinite(v0) || Math.abs(v0) < RELEASE_MIN_V) {
       stop();
       return;
     }
 
-    rafRef.current = requestAnimationFrame(frame);
-  };
-
-  rafRef.current = requestAnimationFrame(frame);
-};
-
-    // stronger inertia, fast drag => fast glide
-    velRef.current = clamp(v0 * 2.6, -2.4, 2.4);
-
-    const DECAY = 0.00155;
-    const MAX_MS = 2400;
+    velRef.current = clamp(v0, -VEL_LIMIT, VEL_LIMIT);
 
     const startTs = performance.now();
     let last = startTs;
 
     const frame = () => {
       const now = performance.now();
-      const dt = Math.min(40, Math.max(8, now - last));
+      const dt = now - last;
       last = now;
 
-      const v = velRef.current;
-      const sign = Math.sign(v || 1);
-      const sp = Math.abs(v);
+      const sign = Math.sign(velRef.current || 1);
+      const sp = Math.abs(velRef.current);
 
       const nextSp = Math.max(0, sp * (1 - DECAY * dt));
       velRef.current = sign * nextSp;
@@ -694,7 +657,7 @@ function IOSPickerWheelVertical3D({ disabled, value, onStep }) {
       accumPxRef.current += velRef.current * dt;
       tickSteps();
 
-      if (nextSp < MIN_VEL_TO_INERTIA || now - startTs > MAX_MS) {
+      if (nextSp < STOP_V || now - startTs > MAX_MS) {
         stop();
         return;
       }
@@ -724,32 +687,30 @@ function IOSPickerWheelVertical3D({ disabled, value, onStep }) {
     lastTsRef.current = now;
 
     const v = dy / dt;
-    // smooth velocity to avoid jitter
+
+    // smooth velocity
     velRef.current = velRef.current * 0.65 + v * 0.35;
 
+    // accel: fast drag => more movement
     const speed = Math.abs(velRef.current);
     const accel = clamp(1 + speed * 0.55, 1, 2.6);
-    accumPxRef.current += dy * accel;
 
+    accumPxRef.current += dy * accel;
     tickSteps();
   };
 
   const onPointerUp = (e) => {
-  draggingRef.current = false;
+    draggingRef.current = false;
+    try {
+      ref.current?.releasePointerCapture?.(e.pointerId);
+    } catch {}
 
-  // pointer capture bırak
-  try {
-    ref.current?.releasePointerCapture?.(e.pointerId);
-  } catch {}
-
-  // ✅ çok yavaş bırakıldıysa inertia başlatma
-  if (!Number.isFinite(velRef.current) || Math.abs(velRef.current) < 0.12) {
-    stop();
-    return;
-  }
-
-  startInertia();
-};
+    if (!Number.isFinite(velRef.current) || Math.abs(velRef.current) < RELEASE_MIN_V) {
+      stop();
+      return;
+    }
+    startInertia();
+  };
 
   const onWheel = (e) => {
     if (disabled) return;
@@ -757,15 +718,14 @@ function IOSPickerWheelVertical3D({ disabled, value, onStep }) {
     stop();
 
     const dy = e.deltaY;
-    const speed = Math.abs(dy);
-    const steps = clamp(Math.round(speed / 14), 1, 18);
+    const steps = clamp(Math.round(Math.abs(dy) / 14), 1, 18);
     const dir = dy < 0 ? +1 : -1;
 
     for (let i = 0; i < steps; i += 1) onStep(dir);
     vibe(8);
 
-    // seed inertia from wheel
-    velRef.current = clamp((dy / 500) * -1, -2.0, 2.0);
+    // small inertia seed
+    velRef.current = clamp((dy / 500) * -1, -VEL_LIMIT, VEL_LIMIT);
     startInertia();
   };
 
@@ -936,7 +896,7 @@ const VerseRow = React.memo(function VerseRow({ v, idx, active, onRowClick, setR
   const ay = Number(v?.ayah || 0);
 
   const arText = (v.ar || "").trimStart();
-  // ✅ no newlines in table cells:
+  // no newlines in table cells:
   const deText = (v.de || "").replace(/\s*\n+\s*/g, " ").trim();
   const trText = (v.tr || "").replace(/\s*\n+\s*/g, " ").trim();
 
@@ -1045,7 +1005,7 @@ export default function App() {
     isPlayingRef.current = isPlaying;
   }, [verses, activeIndex, duration, isPlaying]);
 
-  // ✅ lock background scroll while single player open (scroll restore)
+  // lock background scroll while single player open (scroll restore)
   useEffect(() => {
     if (!singleOn) {
       document.body.classList.remove("spOpen");
@@ -1201,32 +1161,29 @@ export default function App() {
   }, []);
 
   const seekVerse = useCallback(
-  (idx, autoPlay = true) => {
-    const vs = versesRef.current;
-    const v = vs[idx];
-    if (!v) return;
+    (idx, autoPlay = true) => {
+      const vs = versesRef.current;
+      const v = vs[idx];
+      if (!v) return;
 
-    const start = Number(v.start);
-    if (!Number.isFinite(start)) return;
+      const start = Number(v.start);
+      if (!Number.isFinite(start)) return;
 
-    // repeat state
-    repeatStateRef.current = { idx, done: 0, armed: true, lastFire: 0 };
+      repeatStateRef.current = { idx, done: 0, armed: true, lastFire: 0 };
 
-    // ✅ SEEK
-    seekTo(start, autoPlay);
+      seekTo(start, autoPlay);
 
-    // ✅ IMPORTANT: update UI immediately (works even when audio paused)
-    setActiveIndex(idx);
-    activeIndexRef.current = idx;
+      // update UI immediately (even if paused)
+      setActiveIndex(idx);
+      activeIndexRef.current = idx;
 
-    // ✅ keep table sync without waiting for timeupdate
-    requestAnimationFrame(() => {
-      const el = rowRefs.current[idx];
-      if (el) ensureRowVisible(el, 10);
-    });
-  },
-  [seekTo]
-);
+      requestAnimationFrame(() => {
+        const el = rowRefs.current[idx];
+        if (el) ensureRowVisible(el, 10);
+      });
+    },
+    [seekTo]
+  );
 
   useEffect(() => {
     if (!singleOn) return;
@@ -1283,9 +1240,8 @@ export default function App() {
 
       const v = vs[idx];
       const s = Number(v?.start);
-      if (Number.isFinite(s)) {
-        seekTo(s, true);
-      }
+      if (Number.isFinite(s)) seekTo(s, true);
+
       return next;
     });
   }, [seekTo]);
@@ -1295,7 +1251,6 @@ export default function App() {
     const a = audioRef.current;
     if (!a) return;
 
-    // Active verse
     if (verses.length) {
       const t = currentTimeRef.current;
       const idx = monotonic
@@ -1309,7 +1264,6 @@ export default function App() {
       }
     }
 
-    // Repeat engine
     if (!verses.length) return;
     if (repeatMode <= 0) return;
 
