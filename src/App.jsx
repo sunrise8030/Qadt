@@ -623,12 +623,52 @@ function IOSPickerWheelVertical3D({ disabled, value, onStep }) {
     if (did) vibe(8);
   };
 
-  const startInertia = () => {
-    const v0 = velRef.current;
-    if (!Number.isFinite(v0) || Math.abs(v0) < MIN_VEL_TO_INERTIA) {
+ const startInertia = () => {
+  const v0 = velRef.current;
+
+  // ✅ düşük hızda bırakıldıysa: inertia yok, direkt dur
+  if (!Number.isFinite(v0) || Math.abs(v0) < 0.12) {
+    stop();
+    return;
+  }
+
+  // ✅ hız limit (çok hızlı fırlamasın)
+  velRef.current = clamp(v0, -1.8, 1.8);
+
+  // ✅ daha güçlü fren (bırakınca kısa sürede dursun)
+  const DECAY = 0.009;      // büyüdükçe daha hızlı durur
+  const STOP_V = 0.10;      // bunun altına inince dur
+  const MAX_MS = 650;       // maksimum spin süresi
+
+  const startTs = performance.now();
+  let last = startTs;
+
+  const frame = () => {
+    const now = performance.now();
+    const dt = now - last;
+    last = now;
+
+    const sign = Math.sign(velRef.current);
+    const sp = Math.abs(velRef.current);
+
+    // friksiyon
+    const nextSp = Math.max(0, sp * (1 - DECAY * dt));
+    velRef.current = sign * nextSp;
+
+    accumPxRef.current += velRef.current * dt;
+    tickSteps();
+
+    // ✅ stop koşulları
+    if (nextSp < STOP_V || now - startTs > MAX_MS) {
       stop();
       return;
     }
+
+    rafRef.current = requestAnimationFrame(frame);
+  };
+
+  rafRef.current = requestAnimationFrame(frame);
+};
 
     // stronger inertia, fast drag => fast glide
     velRef.current = clamp(v0 * 2.6, -2.4, 2.4);
@@ -694,10 +734,22 @@ function IOSPickerWheelVertical3D({ disabled, value, onStep }) {
     tickSteps();
   };
 
-  const onPointerUp = () => {
-    draggingRef.current = false;
-    startInertia();
-  };
+  const onPointerUp = (e) => {
+  draggingRef.current = false;
+
+  // pointer capture bırak
+  try {
+    ref.current?.releasePointerCapture?.(e.pointerId);
+  } catch {}
+
+  // ✅ çok yavaş bırakıldıysa inertia başlatma
+  if (!Number.isFinite(velRef.current) || Math.abs(velRef.current) < 0.12) {
+    stop();
+    return;
+  }
+
+  startInertia();
+};
 
   const onWheel = (e) => {
     if (disabled) return;
