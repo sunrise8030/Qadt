@@ -22,3 +22,9 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# allow audio+data assets
+!public/audio/
+!public/audio/*.mp3
+!public/data/
+!public/data/*.json
