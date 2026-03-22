@@ -1149,17 +1149,32 @@ export default function App() {
   }, []);
 
   const seekVerse = useCallback(
-    (idx, autoPlay = true) => {
-      const v = versesRef.current[idx];
-      if (!v) return;
-      const start = Number(v.start);
-      if (!Number.isFinite(start)) return;
+  (idx, autoPlay = true) => {
+    const vs = versesRef.current;
+    const v = vs[idx];
+    if (!v) return;
 
-      repeatStateRef.current = { idx, done: 0, armed: true, lastFire: 0 };
-      seekTo(start, autoPlay);
-    },
-    [seekTo]
-  );
+    const start = Number(v.start);
+    if (!Number.isFinite(start)) return;
+
+    // repeat state
+    repeatStateRef.current = { idx, done: 0, armed: true, lastFire: 0 };
+
+    // ✅ SEEK
+    seekTo(start, autoPlay);
+
+    // ✅ IMPORTANT: update UI immediately (works even when audio paused)
+    setActiveIndex(idx);
+    activeIndexRef.current = idx;
+
+    // ✅ keep table sync without waiting for timeupdate
+    requestAnimationFrame(() => {
+      const el = rowRefs.current[idx];
+      if (el) ensureRowVisible(el, 10);
+    });
+  },
+  [seekTo]
+);
 
   useEffect(() => {
     if (!singleOn) return;
