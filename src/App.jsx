@@ -581,6 +581,9 @@ function IOSPickerWheelVertical3D({ disabled, value, onStep }) {
   const accumPxRef = useRef(0);
   const rafRef = useRef(0);
 
+
+  const lastVibeRef = useRef(0);
+
   const STEP_PX = 12;
 
   useEffect(() => {
@@ -611,8 +614,14 @@ function IOSPickerWheelVertical3D({ disabled, value, onStep }) {
       did = true;
     }
 
-    if (did) tactilePulse(8);
-  };
+    if (did) {
+      const now = performance.now();
+      if (now - (lastVibeRef.current || 0) > 70) {
+        lastVibeRef.current = now;
+        tactilePulse(8);
+      }
+    }
+};
 
   const startInertia = () => {
     const v0 = velRef.current;
