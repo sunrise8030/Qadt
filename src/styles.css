@@ -1,11 +1,11 @@
 /* FILE: src/styles.css */
-
 :root{
   --bg:#0b0f16;
   --panel:#0f1520;
   --border:rgba(255,255,255,0.08);
   --text:rgba(255,255,255,0.92);
   --muted:rgba(255,255,255,0.62);
+  --accent:rgba(99,179,237,1);
   --danger:rgba(255,120,120,0.18);
 
   --w-no: 70px;
@@ -29,22 +29,23 @@ html,body{
     radial-gradient(1200px 800px at 70% 35%, rgba(255,120,120,0.10), transparent 55%),
     var(--bg);
   color:var(--text);
-  font-family: ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial,"Noto Sans";
+  font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial,"Noto Sans","Apple Color Emoji","Segoe UI Emoji";
 }
 
-/* Single player open => lock background scroll */
+/* lock body scroll while single player open */
 body.spOpen{
   position: fixed;
-  overflow: hidden;
+  left: 0;
+  right: 0;
   width: 100%;
+  overflow: hidden;
 }
 
-/* Layout */
-.appShell{ display:grid; min-height:100vh; }
-.appShellSolo{ grid-template-columns:1fr !important; }
+.appShell{ display:grid; grid-template-columns: 1fr; min-height:100vh; }
+.appShellSolo{ grid-template-columns: 1fr !important; }
+
 .content{ padding:16px; }
 
-/* Header */
 .surahHeader{
   border:1px solid var(--border);
   background:rgba(15,21,32,0.55);
@@ -129,7 +130,6 @@ body.spOpen{
 }
 .btnSmall:hover,.btnPrimary:hover{ border-color:rgba(255,255,255,0.16); }
 
-/* Single Player button */
 .btnSinglePlayer{
   padding: 14px 16px;
   border-radius: 14px;
@@ -143,7 +143,10 @@ body.spOpen{
     0 10px 22px rgba(0,0,0,0.35),
     0 3px 0 rgba(255,255,255,0.22) inset,
     0 -6px 10px rgba(0,0,0,0.25) inset;
+  transform: translateY(0);
 }
+.btnSinglePlayer:hover{ filter: brightness(1.06); }
+.btnSinglePlayer:active{ transform: translateY(2px); }
 
 /* Table */
 .tableWrap{
@@ -165,6 +168,8 @@ body.spOpen{
   position:sticky;
   top:0;
   background:rgba(15,21,32,0.90);
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
   z-index:2;
 }
 
@@ -180,6 +185,7 @@ body.spOpen{
 }
 .tableBody .row:nth-child(odd){ background-color: rgba(255,255,255,0.05); }
 .tableBody .row:nth-child(even){ background-color: rgba(0,0,0,0.18); }
+.row:hover{ filter: brightness(1.06); }
 .row.active{
   background-color: rgba(99,179,237,0.14) !important;
   box-shadow: 0 0 0 1px rgba(99,179,237,0.35) inset;
@@ -191,13 +197,13 @@ body.spOpen{
   display:flex;
   align-items:flex-start;
   min-height: 100%;
+  text-align:left;
 }
 .cell:last-child{ border-right:none; }
 
 .colNo{ color:var(--muted); font-variant-numeric:tabular-nums; }
-
 .colAr{
-  display:block !important;
+  display: block !important;
   direction: rtl;
   unicode-bidi: isolate-override;
   text-align: right;
@@ -207,18 +213,20 @@ body.spOpen{
   font-family: "Noto Naskh Arabic","Amiri","Scheherazade New","Noto Sans Arabic", serif;
   white-space: normal;
 }
-
 .colDe, .colTr{
   font-size:14px;
   line-height:1.5;
   text-align:left;
-  white-space: nowrap;      /* tek satır */
-  overflow: hidden;
-  text-overflow: ellipsis;  /* çok uzunsa ... */
+  white-space: normal;
 }
 
 @media (max-width:700px){
-  :root{ --w-no: 60px; --w-ar: 1.2fr; --w-tr: 1fr; --w-de: 0fr; }
+  :root{
+    --w-no: 60px;
+    --w-ar: 1.2fr;
+    --w-tr: 1fr;
+    --w-de: 0fr;
+  }
   .tableHeader, .row{
     min-width:680px;
     grid-template-columns: var(--w-no) var(--w-ar) var(--w-tr);
@@ -226,31 +234,40 @@ body.spOpen{
   .colDe{ display:none; }
 }
 
-/* Single Player overlay (daha koyu = şeffaflık azaltıldı) */
+/* Single Player overlay */
+@keyframes spBackdropIn{
+  0%   { opacity: 0; transform: translateY(10px); }
+  100% { opacity: 1; transform: translateY(0px); }
+}
+
 .singlePlayerBackdrop{
   position: fixed;
   inset: 0;
   z-index: 9999;
-  background: rgba(0,0,0,0.78);
+  background: rgba(0,0,0,0.75); /* daha az şeffaf */
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   display: grid;
   place-items: center;
   padding: 14px;
+  animation: spBackdropIn 380ms cubic-bezier(0.16, 1, 0.3, 1) both;
   overflow: hidden;
 }
 
 .singlePlayerCard{
   width: min(1100px, 100%);
-  background: rgba(15,21,32,0.84);
+  background: rgba(15,21,32,0.86); /* daha az şeffaf */
   border: 1px solid rgba(255,255,255,0.12);
   border-radius: 20px;
   box-shadow: 0 30px 90px rgba(0,0,0,0.55);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   padding: 14px;
   max-height: 86vh;
   overflow: auto;
 }
 
-.singlePlayerLines{ display:grid; gap:10px; }
-
+.singlePlayerLines{ display: grid; gap: 10px; }
 .singlePlayerLine{
   border: 1px solid rgba(255,255,255,0.08);
   border-radius: 16px;
@@ -294,16 +311,16 @@ body.spOpen{
   display:inline-flex;
   align-items:center;
   justify-content:center;
+  touch-action: manipulation;
 }
+.spBtn:active{ transform: translateY(2px); }
 .spBtnPrimary{
   min-width: 118px;
   height: 74px;
   font-size: 30px;
   background: linear-gradient(180deg, rgba(200,255,220,1), rgba(110,230,165,1));
 }
-.spBtnClose{
-  background: linear-gradient(180deg, rgba(255,220,220,1), rgba(255,150,150,1));
-}
+.spBtnClose{ background: linear-gradient(180deg, rgba(255,220,220,1), rgba(255,150,150,1)); }
 
 /* Wheel */
 .spPicker3D{
@@ -331,6 +348,7 @@ body.spOpen{
   place-items:center;
   perspective: 980px;
 }
+
 .spPickerItems3D{
   width: 100%;
   height: 100%;
@@ -338,6 +356,7 @@ body.spOpen{
   place-items:center;
   transform-style: preserve-3d;
 }
+
 .spPickerItem3D{
   position:absolute;
   width: 100%;
@@ -354,6 +373,7 @@ body.spOpen{
   color: rgba(255,255,255,0.96);
   text-shadow: 0 2px 14px rgba(0,0,0,0.38);
 }
+
 .spPickerShine{
   position:absolute;
   inset:-10px;
@@ -401,6 +421,7 @@ body.spOpen{
   color: rgba(255,255,255,0.70);
   font-weight: 950;
   font-size: 18px;
+  letter-spacing: 0.5px;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -410,9 +431,10 @@ body.spOpen{
 .spRBtn.on{
   color: rgba(10,14,22,0.98);
   background: linear-gradient(180deg, rgba(170,220,255,1), rgba(99,179,237,1));
+  border-color: rgba(255,255,255,0.22);
 }
 
-/* Bottom dock */
+/* Dock bottom */
 .singlePlayerDockBottom{
   position: fixed !important;
   right: 14px !important;
@@ -430,11 +452,11 @@ body.spOpen{
   white-space: nowrap !important;
 }
 .singlePlayerDockRow{
-  display:flex;
-  gap:10px;
-  align-items:center;
-  flex-wrap:nowrap;
-  white-space:nowrap;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: nowrap;
+  white-space: nowrap;
 }
 
 /* Segment styles */
@@ -450,3 +472,11 @@ body.spOpen{
 .markGreen{ color: var(--markGreen) !important; background: var(--markGreenBg); }
 .fontRed{ color: var(--markRed) !important; }
 .fontGreen{ color: var(--markGreen) !important; }
+
+/* PERF: Safari fallback */
+.isSafari .playerSticky,
+.isSafari .singlePlayerBackdrop,
+.isSafari .singlePlayerCard{
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
