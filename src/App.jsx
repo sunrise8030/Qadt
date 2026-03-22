@@ -502,15 +502,175 @@ function IOSPickerWheelVertical3D({ disabled, value, onStep }) {
   const accumPxRef = useRef(0);
   const rafRef = useRef(0);
 
-  const lastVibeRef = useRef(0);
-
-  const STEP_PX = 8;
-  const MAX_STEPS_PER_TICK = 18;
+  const STEP_PX = 12;
 
   useEffect(() => {
     return () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
+  }, []);
+
+  const stop = () => {
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    rafRef.current = 0;
+    velRef.current = 0;
+    accumPxRef.current = 0;
+  };
+
+  const tickSteps = () => {
+    let did = false;
+
+    while (accumPxRef.current <= -STEP_PX) {
+      onStep(+1);
+      accumPxRef.current += STEP_PX;
+      did = true;
+    }
+
+    while (accumPxRef.current >= STEP_PX) {
+      onStep(-1);
+      accumPxRef.current -= STEP_PX;
+      did = true;
+    }
+
+    if (did) tactilePulse(8);
+  };
+
+  const startInertia = () => {
+    const v0 = velRef.current;
+    if (!Number.isFinite(v0) || Math.abs(v0) < 0.05) {
+      stop();
+      return;
+    }
+
+    const DECAY = 0.0045;
+    const MAX_MS = 1100;
+    const startTs = performance.now();
+    let last = performance.now();
+
+    const frame = () => {
+      const now = performance.now();
+      const dt = now - last;
+      last = now;
+
+      const sign = Math.sign(velRef.current || v0);
+      const sp = Math.abs(velRef.current || v0);
+      const nextSp = Math.max(0, sp * (1 - DECAY * dt));
+      velRef.current = sign * nextSp;
+
+      accumPxRef.current += velRef.current * dt;
+      tickSteps();
+
+      if (nextSp < 0.05 || now - startTs > MAX_MS) {
+        stop();
+        return;
+      }
+      rafRef.current = requestAnimationFrame(frame);
+    };
+
+    rafRef.current = requestAnimationFrame(frame);
+  };
+
+  const onPointerDown = (e) => {
+    if (disabled) return;
+    stop();
+    draggingRef.current = true;
+    lastYRef.current = e.clientY;
+    lastTsRef.current = performance.now();
+    ref.current?.setPointerCapture?.(e.pointerId);
+  };
+
+  const onPointerMove = (e) => {
+    if (disabled || !draggingRef.current) return;
+
+    const now = performance.now();
+    const dy = e.clientY - lastYRef.current;
+    const dt = Math.max(1, now - (lastTsRef.current || now));
+
+    lastYRef.current = e.clientY;
+    lastTsRef.current = now;
+
+    velRef.current = dy / dt;
+    accumPxRef.current += dy;
+    tickSteps();
+  };
+
+  const onPointerUp = () => {
+    draggingRef.current = false;
+    startInertia();
+  };
+
+  const onWheel = (e) => {
+    if (disabled) return;
+    e.preventDefault();
+    stop();
+
+    const dy = e.deltaY;
+    const steps = clamp(Math.round(Math.abs(dy) / 18), 1, 14);
+    const dir = dy < 0 ? +1 : -1;
+
+    for (let i = 0; i < steps; i += 1) onStep(dir);
+    tactilePulse(8);
+
+    velRef.current = clamp(dy / 820, -1.0, 1.0);
+    startInertia();
+  };
+
+  const items = useMemo(() => {
+    const v = Number(value) || 0;
+    return [v - 3, v - 2, v - 1, v, v + 1, v + 2, v + 3];
+  }, [value]);
+
+  const angles = [-82, -54, -28, 0, 28, 54, 82];
+  const radius = 90;
+
+  return (
+    <div className={`spPicker3D ${disabled ? "disabled" : ""}`}>
+      <div className="spPickerShine" />
+      <div className="spPickerFadeTop" />
+      <div className="spPickerFadeBottom" />
+      <div className="spPickerBar" />
+
+      <div
+        ref={ref}
+        className="spPickerViewport"
+        role="slider"
+        aria-label="Ayet çarkı"
+        tabIndex={disabled ? -1 : 0}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerUp}
+        onWheel={onWheel}
+      >
+        <div className="spPickerItems3D">
+          {items.map((n, i) => {
+            const ang = angles[i] ?? 0;
+            const active = n === Number(value);
+
+            const abs = Math.abs(ang);
+            const opacity = clamp(1 - abs / 92, 0.12, 1);
+            const blur = clamp(abs / 55, 0, 1.4);
+            const scale = clamp(1 - abs / 220, 0.86, 1);
+
+            return (
+              <div
+                key={n}
+                className={`spPickerItem3D ${active ? "active" : ""}`}
+                style={{
+                  opacity,
+                  filter: `blur(${blur}px)`,
+                  transform: `rotateX(${ang}deg) translateZ(${radius}px) scale(${scale})`,
+                }}
+              >
+                {n <= 0 ? "—" : String(n).padStart(2, "0")}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
   }, []);
 
   const stop = () => {
