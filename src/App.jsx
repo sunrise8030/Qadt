@@ -17,8 +17,8 @@ const SURAHES = [
 
 /**
  * SEGMENTS:
- * - ar: highlight + color (snippet highlight)
- * - tr/de: color only (if snippet found -> color that part, else no color)
+ * - ar: highlight + color
+ * - tr/de: color only (segment if found; if close enough => color whole line)
  */
 const SEGMENTS = {
   6: {
@@ -131,9 +131,7 @@ function tactilePulse(ms = 8) {
   } catch {}
 }
 
-/* =========================
-   Active verse index
-   ========================= */
+/* ============ active verse index ============ */
 function isMonotonicNonDecreasing(arr) {
   for (let i = 1; i < arr.length; i += 1) if (!(arr[i] >= arr[i - 1])) return false;
   return true;
@@ -195,9 +193,7 @@ function findActiveVerseIndexLinearOverlapSafe(verses, t) {
   return closest;
 }
 
-/* =========================
-   Sticky scroll helper
-   ========================= */
+/* ============ sticky scroll helper ============ */
 function getStickyOverlayTopPx() {
   const el = document.querySelector(".playerSticky");
   if (!el) return null;
@@ -217,34 +213,39 @@ function ensureRowVisible(el, padding = 10) {
   const effectiveBottom =
     overlayTop != null ? Math.min(viewportBottom, overlayTop - padding) : viewportBottom;
 
-  const above = r.top < viewportTop;
-  const below = r.bottom > effectiveBottom;
-  if (above || below) el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  if (r.top < viewportTop || r.bottom > effectiveBottom) {
+    el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }
 }
 
-/* =========================
-   JSON tolerant
-   ========================= */
+/* ============ json tolerant ============ */
 function parseJsonTolerant(text, urlForMsg = "") {
   const raw = String(text ?? "");
   let s = raw.replace(/^\uFEFF/, "").trim();
 
-  if (
-    s.startsWith("<!doctype") ||
-    s.startsWith("<html") ||
-    s.startsWith("<head") ||
-    s.startsWith("<")
-  ) {
+  if (s.startsWith("<!doctype") || s.startsWith("<html") || s.startsWith("<head") || s.startsWith("<")) {
     throw new Error(`Expected JSON but got HTML | url=${urlForMsg} | head=${s.slice(0, 80)}`);
   }
 
   s = s.replace(/,\s*([}\]])/g, "$1");
-  return JSON.parse(s);
+
+  try {
+    return JSON.parse(s);
+  } catch (e) {
+    const msg = String(e?.message || e);
+    const m = msg.match(/position\s+(\d+)/i);
+    if (m) {
+      const pos = Number(m[1]);
+      const from = Math.max(0, pos - 80);
+      const to = Math.min(s.length, pos + 80);
+      const ctx = s.slice(from, to).replaceAll("\n", "\\n");
+      throw new Error(`JSON parse failed | url=${urlForMsg} | pos=${pos} | ctx=...${ctx}...`);
+    }
+    throw new Error(`JSON parse failed | url=${urlForMsg} | msg=${msg}`);
+  }
 }
 
-/* =========================
-   Segment marking (cached)
-   ========================= */
+/* ============ segment marking ============ */
 function stripOuterQuotes(s) {
   const t = String(s ?? "").trim();
   return t.replace(/^["“”]+/, "").replace(/["“”]+$/, "").trim();
@@ -322,6 +323,7 @@ function normalizeArabicForSearch(original) {
 
   for (let i = 0; i < s.length; i += 1) {
     const ch = s[i];
+
     if (isArabicIgnorable(ch)) continue;
 
     if (/\s/.test(ch)) {
@@ -332,8 +334,9 @@ function normalizeArabicForSearch(original) {
       continue;
     }
 
+    const folded = foldArabicChar(ch);
     map.push(i);
-    norm += foldArabicChar(ch);
+    norm += folded;
   }
 
   return { norm: norm.trim().replace(/\s+/g, " "), map };
@@ -440,7 +443,8 @@ function markSegmentUncached(text, ayah, lang) {
 
   const sN = normalizeCommon(s);
   const nN = normalizeCommon(needle);
-  if (sN && nN && sN.includes(nN)) return <span className={cls}>{s}</span>;
+  if (!sN || !nN) return s;
+  if (sN.includes(nN)) return <span className={cls}>{s}</span>;
 
   return s;
 }
@@ -466,10 +470,7 @@ function useMarkSegmentCached() {
   return { markSegment, clearCache: clear };
 }
 
-/* =========================
-   UI Components
-   ========================= */
-
+/* ============ UI ============ */
 function MinimalPlayerBar({ isPlaying, onPlayPause, onPrev, onNext, onOpenSingle }) {
   return (
     <div className="playerControls">
@@ -477,7 +478,6 @@ function MinimalPlayerBar({ isPlaying, onPlayPause, onPrev, onNext, onOpenSingle
         <div className="liveTime">
           <span className="liveLabel">PLAYER</span>
         </div>
-
         <div className="liveActions">
           <button className="btnPrimary" type="button" onClick={onPlayPause}>
             {isPlaying ? "Pause" : "Play"}
@@ -498,9 +498,7 @@ function MinimalPlayerBar({ isPlaying, onPlayPause, onPrev, onNext, onOpenSingle
 }
 
 /**
- * iOS-like vertical wheel (3D) — ORIGINAL FEEL (fast + inertia)
- * - drag more => more steps
- * - inertia continues smoothly
+ * iOS-like vertical wheel (3D) - fast drag => faster scroll + strong inertia
  */
 function IOSPickerWheelVertical3D({ disabled, value, onStep }) {
   const ref = useRef(null);
@@ -509,11 +507,18 @@ function IOSPickerWheelVertical3D({ disabled, value, onStep }) {
   const lastYRef = useRef(0);
   const lastTsRef = useRef(0);
 
-  const velRef = useRef(0);
+  const velRef = useRef(0); // px/ms
   const accumPxRef = useRef(0);
   const rafRef = useRef(0);
 
-  const STEP_PX = 12;
+  // Tuning (feel)
+  const STEP_PX = 10;
+  const MAX_STEPS_PER_FRAME = 14;
+  const VEL_TO_PX_GAIN = 220;
+  const INERTIA_BOOST = 2.6;
+  const DECAY = 0.00135;
+  const MAX_MS = 2400;
+  const STOP_VEL = 0.02;
 
   useEffect(() => {
     return () => {
@@ -528,50 +533,52 @@ function IOSPickerWheelVertical3D({ disabled, value, onStep }) {
     accumPxRef.current = 0;
   };
 
-  const tickSteps = () => {
-    let did = false;
+  const applyStepsFromAccum = () => {
+    let steps = 0;
 
-    while (accumPxRef.current <= -STEP_PX) {
+    while (accumPxRef.current <= -STEP_PX && steps < MAX_STEPS_PER_FRAME) {
       onStep(+1);
       accumPxRef.current += STEP_PX;
-      did = true;
+      steps += 1;
     }
-
-    while (accumPxRef.current >= STEP_PX) {
+    while (accumPxRef.current >= STEP_PX && steps < MAX_STEPS_PER_FRAME) {
       onStep(-1);
       accumPxRef.current -= STEP_PX;
-      did = true;
+      steps += 1;
     }
 
-    if (did) tactilePulse(8);
+    if (steps) tactilePulse(6);
+
+    // Prevent "takıntı" accumulation
+    accumPxRef.current = clamp(accumPxRef.current, -STEP_PX * 3, STEP_PX * 3);
   };
 
   const startInertia = () => {
     const v0 = velRef.current;
-    if (!Number.isFinite(v0) || Math.abs(v0) < 0.05) {
+    if (!Number.isFinite(v0) || Math.abs(v0) < STOP_VEL) {
       stop();
       return;
     }
 
-    const DECAY = 0.0045;
-    const MAX_MS = 1100;
+    velRef.current = v0 * INERTIA_BOOST;
+
     const startTs = performance.now();
-    let last = performance.now();
+    let last = startTs;
 
     const frame = () => {
       const now = performance.now();
-      const dt = now - last;
+      const dt = Math.min(32, Math.max(8, now - last));
       last = now;
 
-      const sign = Math.sign(velRef.current || v0);
-      const sp = Math.abs(velRef.current || v0);
+      const sign = Math.sign(velRef.current);
+      const sp = Math.abs(velRef.current);
       const nextSp = Math.max(0, sp * (1 - DECAY * dt));
       velRef.current = sign * nextSp;
 
       accumPxRef.current += velRef.current * dt;
-      tickSteps();
+      applyStepsFromAccum();
 
-      if (nextSp < 0.05 || now - startTs > MAX_MS) {
+      if (nextSp < STOP_VEL || now - startTs > MAX_MS) {
         stop();
         return;
       }
@@ -600,9 +607,13 @@ function IOSPickerWheelVertical3D({ disabled, value, onStep }) {
     lastYRef.current = e.clientY;
     lastTsRef.current = now;
 
-    velRef.current = dy / dt;
-    accumPxRef.current += dy;
-    tickSteps();
+    const v = dy / dt; // px/ms
+    velRef.current = v;
+
+    const extra = Math.sign(dy) * Math.min(48, Math.abs(v) * VEL_TO_PX_GAIN);
+    accumPxRef.current += dy + extra;
+
+    applyStepsFromAccum();
   };
 
   const onPointerUp = () => {
@@ -616,13 +627,13 @@ function IOSPickerWheelVertical3D({ disabled, value, onStep }) {
     stop();
 
     const dy = e.deltaY;
-    const steps = clamp(Math.round(Math.abs(dy) / 18), 1, 14);
+    const steps = clamp(Math.round(Math.abs(dy) / 14), 1, 18);
     const dir = dy < 0 ? +1 : -1;
 
     for (let i = 0; i < steps; i += 1) onStep(dir);
-    tactilePulse(8);
+    tactilePulse(6);
 
-    velRef.current = clamp(dy / 820, -1.0, 1.0);
+    velRef.current = clamp(dy / 420, -1.6, 1.6);
     startInertia();
   };
 
@@ -728,14 +739,16 @@ function SinglePlayerPanel({
 
   return (
     <div className="singlePlayerBackdrop" role="dialog" aria-modal="true" aria-label="Single Player">
-      <div className="singlePlayerCard">
+      <div className="singlePlayerCard" onClick={(e) => e.stopPropagation()}>
         <div className="singlePlayerLines">
           <div className="singlePlayerLine singlePlayerLineAr" dir="rtl">
             {markSegment((verse?.ar || "—").trim(), ay, "ar")}
           </div>
+
           <div className="singlePlayerLine singlePlayerLineDe">
             {markSegment((verse?.de || "—").trim(), ay, "de")}
           </div>
+
           <div className="singlePlayerLine singlePlayerLineTr">
             {markSegment((verse?.tr || "—").trim(), ay, "tr")}
           </div>
@@ -750,7 +763,7 @@ function SinglePlayerPanel({
             ◀
           </button>
 
-          <button className="spBtn spBtnPrimary" type="button" onClick={onPlayPause} aria-label="Play">
+          <button className="spBtn spBtnPrimary" type="button" onClick={onPlayPause} aria-label="Play/Pause">
             {isPlaying ? "⏸" : "▶"}
           </button>
 
@@ -784,7 +797,6 @@ function SinglePlayerPanel({
 
 const VerseRow = React.memo(function VerseRow({ v, idx, active, onRowClick, setRowRef, markSegment }) {
   const ay = Number(v?.ayah || 0);
-
   const arText = (v.ar || "").trimStart();
   const deText = (v.de || "").replace(/\s*\n+\s*/g, " ").trim();
   const trText = (v.tr || "").replace(/\s*\n+\s*/g, " ").trim();
@@ -797,11 +809,9 @@ const VerseRow = React.memo(function VerseRow({ v, idx, active, onRowClick, setR
       ref={(el) => setRowRef(idx, el)}
     >
       <div className="cell colNo">{v.ayah}</div>
-
       <div className="cell colAr" dir="rtl">
         {markSegment(arText, ay, "ar")}
       </div>
-
       <div className="cell colDe">{markSegment(deText, ay, "de")}</div>
       <div className="cell colTr">{markSegment(trText, ay, "tr")}</div>
     </button>
@@ -858,6 +868,7 @@ export default function App() {
   const activeIndexRef = useRef(activeIndex);
   const durationRef = useRef(duration);
   const isPlayingRef = useRef(isPlaying);
+
   const currentTimeRef = useRef(0);
 
   const [tick, setTick] = useState(0);
@@ -872,19 +883,28 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    try {
+      const ua = navigator.userAgent || "";
+      const isSafari = /safari/i.test(ua) && !/chrome|crios|chromium|android/i.test(ua);
+      document.documentElement.classList.toggle("isSafari", isSafari);
+    } catch {}
+  }, []);
+
+  useEffect(() => {
     versesRef.current = verses;
     activeIndexRef.current = activeIndex;
     durationRef.current = duration;
     isPlayingRef.current = isPlaying;
   }, [verses, activeIndex, duration, isPlaying]);
 
-  // Background scroll lock while single player open
+  // lock background scroll while single player open (restore scroll)
   useEffect(() => {
     if (!singleOn) {
       document.body.classList.remove("spOpen");
       document.body.style.top = "";
       return;
     }
+
     const y = window.scrollY || 0;
     document.body.dataset.spScrollY = String(y);
     document.body.style.top = `-${y}px`;
@@ -941,7 +961,10 @@ export default function App() {
       try {
         const res = await fetch(versesSrc, { cache: "no-store" });
         const text = await res.text();
-        if (!res.ok) throw new Error(`Fetch failed: ${res.status} ${res.statusText}`);
+
+        if (!res.ok) {
+          throw new Error(`Fetch failed: ${res.status} ${res.statusText} | url=${versesSrc}`);
+        }
 
         const data = parseJsonTolerant(text, versesSrc);
         if (!Array.isArray(data)) throw new Error("Invalid verses JSON (expected array)");
@@ -952,7 +975,7 @@ export default function App() {
           setSingleOn(true);
         }
       } catch (e) {
-        console.error(e);
+        console.error("[verses] load failed:", e);
         if (!cancelled) setError(`Verses could not be loaded: ${e.message}`);
       }
     })();
@@ -986,7 +1009,7 @@ export default function App() {
     const onMeta = () => setDuration(a.duration || 0);
     const onPlay = () => setIsPlaying(true);
     const onPause = () => setIsPlaying(false);
-    const onErr = () => setError("Audio could not be played.");
+    const onErr = () => setError("Audio could not be played. Check console for details.");
 
     a.addEventListener("timeupdate", onTime);
     a.addEventListener("loadedmetadata", onMeta);
@@ -1014,6 +1037,7 @@ export default function App() {
 
     a.currentTime = nextT;
     currentTimeRef.current = nextT;
+
     if (autoPlay) a.play().catch(() => {});
   }, []);
 
@@ -1045,7 +1069,9 @@ export default function App() {
   }, []);
 
   const pause = useCallback(() => {
-    audioRef.current?.pause();
+    const a = audioRef.current;
+    if (!a) return;
+    a.pause();
   }, []);
 
   const prevAyah = useCallback(() => {
@@ -1089,7 +1115,7 @@ export default function App() {
     });
   }, [seekTo]);
 
-  // Active index + repeat engine (tick-driven)
+  // Active index update + repeat engine (tick-driven)
   useEffect(() => {
     const a = audioRef.current;
     if (!a) return;
@@ -1120,6 +1146,7 @@ export default function App() {
     if (!Number.isFinite(s) || !Number.isFinite(e) || e <= s) return;
 
     const st = repeatStateRef.current;
+
     if (st.idx !== idx) {
       repeatStateRef.current = { idx, done: 0, armed: true, lastFire: 0 };
       return;
@@ -1136,6 +1163,7 @@ export default function App() {
     const now = performance.now();
     if (now - (repeatStateRef.current.lastFire || 0) < 350) return;
     repeatStateRef.current.lastFire = now;
+
     repeatStateRef.current.armed = false;
 
     const done = repeatStateRef.current.done || 0;
