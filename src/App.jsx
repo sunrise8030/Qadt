@@ -1389,5 +1389,3 @@ export default function App() {
       <p>Default export restored. Now you can paste your full App.jsx again.</p>
     </div>
   );
-}
->>>>>>> 9e96f7d (fix: restore default export in App.jsx)
