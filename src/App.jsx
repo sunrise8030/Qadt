@@ -17,8 +17,8 @@ const SURAHES = [
 
 /**
  * SEGMENTS:
- * - ar: highlight + color
- * - tr/de: color only (segment if found; otherwise no coloring)
+ * - ar: highlight + color (snippet highlight)
+ * - tr/de: color only (if snippet found -> color that part, else no color)
  */
 const SEGMENTS = {
   6: {
@@ -131,6 +131,9 @@ function tactilePulse(ms = 8) {
   } catch {}
 }
 
+/* =========================
+   Active verse index
+   ========================= */
 function isMonotonicNonDecreasing(arr) {
   for (let i = 1; i < arr.length; i += 1) if (!(arr[i] >= arr[i - 1])) return false;
   return true;
@@ -192,6 +195,9 @@ function findActiveVerseIndexLinearOverlapSafe(verses, t) {
   return closest;
 }
 
+/* =========================
+   Sticky scroll helper
+   ========================= */
 function getStickyOverlayTopPx() {
   const el = document.querySelector(".playerSticky");
   if (!el) return null;
@@ -213,40 +219,32 @@ function ensureRowVisible(el, padding = 10) {
 
   const above = r.top < viewportTop;
   const below = r.bottom > effectiveBottom;
-
   if (above || below) el.scrollIntoView({ behavior: "smooth", block: "nearest" });
 }
 
+/* =========================
+   JSON tolerant
+   ========================= */
 function parseJsonTolerant(text, urlForMsg = "") {
   const raw = String(text ?? "");
   let s = raw.replace(/^\uFEFF/, "").trim();
 
-  if (s.startsWith("<!doctype") || s.startsWith("<html") || s.startsWith("<head") || s.startsWith("<")) {
+  if (
+    s.startsWith("<!doctype") ||
+    s.startsWith("<html") ||
+    s.startsWith("<head") ||
+    s.startsWith("<")
+  ) {
     throw new Error(`Expected JSON but got HTML | url=${urlForMsg} | head=${s.slice(0, 80)}`);
   }
 
   s = s.replace(/,\s*([}\]])/g, "$1");
-
-  try {
-    return JSON.parse(s);
-  } catch (e) {
-    const msg = String(e?.message || e);
-    const m = msg.match(/position\s+(\d+)/i);
-    if (m) {
-      const pos = Number(m[1]);
-      const from = Math.max(0, pos - 80);
-      const to = Math.min(s.length, pos + 80);
-      const ctx = s.slice(from, to).replaceAll("\n", "\\n");
-      throw new Error(`JSON parse failed | url=${urlForMsg} | pos=${pos} | ctx=...${ctx}...`);
-    }
-    throw new Error(`JSON parse failed | url=${urlForMsg} | msg=${msg}`);
-  }
+  return JSON.parse(s);
 }
 
 /* =========================
    Segment marking (cached)
    ========================= */
-
 function stripOuterQuotes(s) {
   const t = String(s ?? "").trim();
   return t.replace(/^["“”]+/, "").replace(/["“”]+$/, "").trim();
@@ -282,7 +280,6 @@ function buildArabicLooseRegex(snippet) {
 
   const chars = Array.from(base);
   const parts = [];
-
   for (const ch of chars) {
     if (/\s/.test(ch)) {
       parts.push(WS);
@@ -291,7 +288,6 @@ function buildArabicLooseRegex(snippet) {
     const esc = escapeRegexLiteral(ch);
     parts.push(`${TAT}${esc}${DIACR}`);
   }
-
   return new RegExp(parts.join(""), "g");
 }
 
@@ -336,9 +332,8 @@ function normalizeArabicForSearch(original) {
       continue;
     }
 
-    const folded = foldArabicChar(ch);
     map.push(i);
-    norm += folded;
+    norm += foldArabicChar(ch);
   }
 
   return { norm: norm.trim().replace(/\s+/g, " "), map };
@@ -445,9 +440,7 @@ function markSegmentUncached(text, ayah, lang) {
 
   const sN = normalizeCommon(s);
   const nN = normalizeCommon(needle);
-  if (!sN || !nN) return s;
-
-  if (sN.includes(nN)) return <span className={cls}>{s}</span>;
+  if (sN && nN && sN.includes(nN)) return <span className={cls}>{s}</span>;
 
   return s;
 }
@@ -474,7 +467,7 @@ function useMarkSegmentCached() {
 }
 
 /* =========================
-   UI
+   UI Components
    ========================= */
 
 function MinimalPlayerBar({ isPlaying, onPlayPause, onPrev, onNext, onOpenSingle }) {
@@ -484,6 +477,7 @@ function MinimalPlayerBar({ isPlaying, onPlayPause, onPrev, onNext, onOpenSingle
         <div className="liveTime">
           <span className="liveLabel">PLAYER</span>
         </div>
+
         <div className="liveActions">
           <button className="btnPrimary" type="button" onClick={onPlayPause}>
             {isPlaying ? "Pause" : "Play"}
@@ -504,7 +498,9 @@ function MinimalPlayerBar({ isPlaying, onPlayPause, onPrev, onNext, onOpenSingle
 }
 
 /**
- * iOS-like vertical wheel (3D) - ORIGINAL (smooth)
+ * iOS-like vertical wheel (3D) — ORIGINAL FEEL (fast + inertia)
+ * - drag more => more steps
+ * - inertia continues smoothly
  */
 function IOSPickerWheelVertical3D({ disabled, value, onStep }) {
   const ref = useRef(null);
@@ -703,7 +699,6 @@ function SinglePlayerPanel({
 }) {
   useEffect(() => {
     if (!open) return;
-
     const onKey = (e) => {
       if (e.key === "Escape") onClose();
       if (e.code === "Space") {
@@ -723,7 +718,6 @@ function SinglePlayerPanel({
         onToggleRepeat();
       }
     };
-
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose, onPlayPause, onPrev, onNext, onToggleRepeat]);
@@ -745,6 +739,7 @@ function SinglePlayerPanel({
           <div className="singlePlayerLine singlePlayerLineTr">
             {markSegment((verse?.tr || "—").trim(), ay, "tr")}
           </div>
+
           <div style={{ height: 140 }} />
         </div>
       </div>
@@ -755,7 +750,7 @@ function SinglePlayerPanel({
             ◀
           </button>
 
-          <button className="spBtn spBtnPrimary" type="button" onClick={onPlayPause} aria-label="Play/Pause">
+          <button className="spBtn spBtnPrimary" type="button" onClick={onPlayPause} aria-label="Play">
             {isPlaying ? "⏸" : "▶"}
           </button>
 
@@ -808,7 +803,6 @@ const VerseRow = React.memo(function VerseRow({ v, idx, active, onRowClick, setR
       </div>
 
       <div className="cell colDe">{markSegment(deText, ay, "de")}</div>
-
       <div className="cell colTr">{markSegment(trText, ay, "tr")}</div>
     </button>
   );
@@ -856,6 +850,7 @@ export default function App() {
   const [activeIndex, setActiveIndex] = useState(-1);
   const [singleOn, setSingleOn] = useState(true);
 
+  // repeat: 0 off, 1 => 1 tekrar, 2 => 2 tekrar
   const [repeatMode, setRepeatMode] = useState(0);
   const repeatStateRef = useRef({ idx: -1, done: 0, armed: true, lastFire: 0 });
 
@@ -863,7 +858,6 @@ export default function App() {
   const activeIndexRef = useRef(activeIndex);
   const durationRef = useRef(duration);
   const isPlayingRef = useRef(isPlaying);
-
   const currentTimeRef = useRef(0);
 
   const [tick, setTick] = useState(0);
@@ -878,28 +872,19 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    try {
-      const ua = navigator.userAgent || "";
-      const isSafari = /safari/i.test(ua) && !/chrome|crios|chromium|android/i.test(ua);
-      document.documentElement.classList.toggle("isSafari", isSafari);
-    } catch {}
-  }, []);
-
-  useEffect(() => {
     versesRef.current = verses;
     activeIndexRef.current = activeIndex;
     durationRef.current = duration;
     isPlayingRef.current = isPlaying;
   }, [verses, activeIndex, duration, isPlaying]);
 
-  // Lock background while single player open (scroll freeze)
+  // Background scroll lock while single player open
   useEffect(() => {
     if (!singleOn) {
       document.body.classList.remove("spOpen");
       document.body.style.top = "";
       return;
     }
-
     const y = window.scrollY || 0;
     document.body.dataset.spScrollY = String(y);
     document.body.style.top = `-${y}px`;
@@ -932,6 +917,7 @@ export default function App() {
     return { starts: s, ends: e, monotonic: ok };
   }, [verses]);
 
+  // Load verses
   useEffect(() => {
     let cancelled = false;
 
@@ -955,10 +941,7 @@ export default function App() {
       try {
         const res = await fetch(versesSrc, { cache: "no-store" });
         const text = await res.text();
-
-        if (!res.ok) {
-          throw new Error(`Fetch failed: ${res.status} ${res.statusText} | url=${versesSrc}`);
-        }
+        if (!res.ok) throw new Error(`Fetch failed: ${res.status} ${res.statusText}`);
 
         const data = parseJsonTolerant(text, versesSrc);
         if (!Array.isArray(data)) throw new Error("Invalid verses JSON (expected array)");
@@ -969,7 +952,7 @@ export default function App() {
           setSingleOn(true);
         }
       } catch (e) {
-        console.error("[verses] load failed:", e);
+        console.error(e);
         if (!cancelled) setError(`Verses could not be loaded: ${e.message}`);
       }
     })();
@@ -979,6 +962,7 @@ export default function App() {
     };
   }, [versesSrc, clearCache]);
 
+  // Audio listeners (tick throttled)
   useEffect(() => {
     const a = audioRef.current;
     if (!a) return;
@@ -1002,7 +986,7 @@ export default function App() {
     const onMeta = () => setDuration(a.duration || 0);
     const onPlay = () => setIsPlaying(true);
     const onPause = () => setIsPlaying(false);
-    const onErr = () => setError("Audio could not be played. Check console for details.");
+    const onErr = () => setError("Audio could not be played.");
 
     a.addEventListener("timeupdate", onTime);
     a.addEventListener("loadedmetadata", onMeta);
@@ -1030,7 +1014,6 @@ export default function App() {
 
     a.currentTime = nextT;
     currentTimeRef.current = nextT;
-
     if (autoPlay) a.play().catch(() => {});
   }, []);
 
@@ -1062,9 +1045,7 @@ export default function App() {
   }, []);
 
   const pause = useCallback(() => {
-    const a = audioRef.current;
-    if (!a) return;
-    a.pause();
+    audioRef.current?.pause();
   }, []);
 
   const prevAyah = useCallback(() => {
@@ -1108,6 +1089,7 @@ export default function App() {
     });
   }, [seekTo]);
 
+  // Active index + repeat engine (tick-driven)
   useEffect(() => {
     const a = audioRef.current;
     if (!a) return;
@@ -1138,7 +1120,6 @@ export default function App() {
     if (!Number.isFinite(s) || !Number.isFinite(e) || e <= s) return;
 
     const st = repeatStateRef.current;
-
     if (st.idx !== idx) {
       repeatStateRef.current = { idx, done: 0, armed: true, lastFire: 0 };
       return;
@@ -1194,7 +1175,12 @@ export default function App() {
     </div>
   );
 
-  const onRowClick = useCallback((idx) => seekVerse(idx, true), [seekVerse]);
+  const onRowClick = useCallback(
+    (idx) => {
+      seekVerse(idx, true);
+    },
+    [seekVerse]
+  );
 
   const setRowRef = useCallback((idx, el) => {
     rowRefs.current[idx] = el;
