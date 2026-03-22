@@ -1,6 +1,4 @@
-// =========================
 // FILE: src/App.jsx
-// =========================
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import "./styles.css";
 
@@ -17,7 +15,11 @@ const SURAHES = [
   },
 ];
 
-// Yusuf highlight snippetleri
+/**
+ * SEGMENTS:
+ * - ar: highlight + color
+ * - tr/de: color only (segment if found; otherwise no coloring)
+ */
 const SEGMENTS = {
   6: {
     color: "green",
@@ -43,12 +45,7 @@ const SEGMENTS = {
     de: "So vergelten Wir den Gutes Tuenden.",
     tr: "“Kendilerini iyiliğe adamış, daima Allah’ı görüyormuşçasına ve Allah’ın kendilerini gördüğünün şuuru içinde davrananları işte böyle mükâfatlandırırız.”",
   },
-  23: {
-    color: "red",
-    ar: "مَعَاذَ ٱللَّهِ",
-    de: "Allah schütze mich (davor)!",
-    tr: "“Allah korusun!”",
-  },
+  23: { color: "red", ar: "مَعَاذَ ٱللَّهِ", de: "Allah schütze mich (davor)!", tr: "“Allah korusun!”" },
   34: {
     color: "green",
     ar: "إِنَّهُۥ هُوَ ٱلسَّمِيعُ ٱلْعَلِيمُ",
@@ -99,7 +96,12 @@ const SEGMENTS = {
   },
   80: { color: "green", ar: "وَهُوَ خَيْرُ ٱلْحَٰكِمِينَ", de: "Er ist der Beste derer, die Urteile fällen.", tr: "“Allah, her zaman en hayırlı hükmü verendir.”" },
   86: { color: "red", ar: "إِنَّمَآ أَشْكُوا۟ بَثِّى وَحُزْنِىٓ إِلَى ٱللَّهِ", de: "Ich klage meinen unerträglichen Kummer und meine Trauer nur Allah (allein)", tr: "“Ben, bütün dertlerimi, keder ve hüznümü Allah’a arz ediyor, O’na şikâyette bulunuyorum.”" },
-  87: { color: "green", ar: "وَلَا تَا۟يْـَٔسُوا۟ مِن رَّوْحِ ٱللَّهِ ۖ إِنَّهُۥ لَا يَا۟يْـَٔسُ مِن رَّوْحِ ٱللَّهِ إِلَّا ٱلْقَوْمُ ٱلْكَٰفِرُونَ", de: "Und gebt nicht die Hoffnung auf das Erbarmen Allahs auf. Es gibt die Hoffnung auf das Erbarmen Allahs nur das ungläubige Volk auf.", tr: "“Allah’ın rahmetinden asla ümidinizi kesmeyin. Şurası bir gerçek ki, O’na inanmayan kâfirler güruhu dışında hiç kimse Allah’ın rahmetinden ümit kesmez.”" },
+  87: {
+    color: "green",
+    ar: "وَلَا تَا۟يْـَٔسُوا۟ مِن رَّوْحِ ٱللَّهِ ۖ إِنَّهُۥ لَا يَا۟يْـَٔسُ مِن رَّوْحِ ٱللَّهِ إِلَّا ٱلْقَوْمُ ٱلْكَٰفِرُونَ",
+    de: "Und gebt nicht die Hoffnung auf das Erbarmen Allahs auf. Es gibt die Hoffnung auf das Erbarmen Allahs nur das ungläubige Volk auf.",
+    tr: "“Allah’ın rahmetinden asla ümidinizi kesmeyin. Şurası bir gerçek ki, O’na inanmayan kâfirler güruhu dışında hiç kimse Allah’ın rahmetinden ümit kesmez.”",
+  },
   88: { color: "green", ar: "إِنَّ ٱللَّهَ يَجْزِى ٱلْمُتَصَدِّقِينَ", de: "Allah vergilt denjenigen, die Almosen geben.", tr: "“Hiç kuşkusuz Allah, fazladan iyilikte bulunanları bol bol mükâfatlandırır.”" },
   90: { color: "green", ar: "إِنَّ ٱللَّهُ لَا يُضِيعُ أَجْرَ ٱلْمُحْسِنِينَ", de: "Gewiß, Allah läßt den Lohn der Gutes Tuenden nicht verlorengehen.", tr: "“Doğrusu şu ki, kim O’na karşı derin saygı duyar, O’na karşı gelmekten sakınır ve O’na itaatla birlikte başına gelenlere de sabrederse, hiç şüphesiz Allah, böyle iyiliğe adanmış ve O’nu görürcesine davranan kimselerin mükâfatını asla zayi etmez.”" },
   91: { color: "green", ar: "تَٱللَّهِ لَقَدْ ءَاثَرَكَ ٱللَّهُ عَلَيْنَا وَإِن كُنَّا لَخَٰطِـِٔينَ", de: "Bei Allah, Allah hat dich uns vorgezogen. Und wir haben wahrlich Verfehlungen begangen.", tr: "“Allah’a yemin olsun ki, gerçekten Allah seni bize tercih etti; biz, başka değil, ancak bir yanlış içinde idik.”" },
@@ -130,14 +132,13 @@ function tactilePulse(ms = 8) {
 }
 
 function isMonotonicNonDecreasing(arr) {
-  for (let i = 1; i < arr.length; i += 1) {
-    if (!(arr[i] >= arr[i - 1])) return false;
-  }
+  for (let i = 1; i < arr.length; i += 1) if (!(arr[i] >= arr[i - 1])) return false;
   return true;
 }
 
 function findActiveVerseIndexBinary(starts, ends, t) {
   if (!Number.isFinite(t) || !starts.length || starts.length !== ends.length) return -1;
+
   let lo = 0;
   let hi = starts.length - 1;
   let best = -1;
@@ -220,12 +221,7 @@ function parseJsonTolerant(text, urlForMsg = "") {
   const raw = String(text ?? "");
   let s = raw.replace(/^\uFEFF/, "").trim();
 
-  if (
-    s.startsWith("<!doctype") ||
-    s.startsWith("<html") ||
-    s.startsWith("<head") ||
-    s.startsWith("<")
-  ) {
+  if (s.startsWith("<!doctype") || s.startsWith("<html") || s.startsWith("<head") || s.startsWith("<")) {
     throw new Error(`Expected JSON but got HTML | url=${urlForMsg} | head=${s.slice(0, 80)}`);
   }
 
@@ -235,11 +231,21 @@ function parseJsonTolerant(text, urlForMsg = "") {
     return JSON.parse(s);
   } catch (e) {
     const msg = String(e?.message || e);
+    const m = msg.match(/position\s+(\d+)/i);
+    if (m) {
+      const pos = Number(m[1]);
+      const from = Math.max(0, pos - 80);
+      const to = Math.min(s.length, pos + 80);
+      const ctx = s.slice(from, to).replaceAll("\n", "\\n");
+      throw new Error(`JSON parse failed | url=${urlForMsg} | pos=${pos} | ctx=...${ctx}...`);
+    }
     throw new Error(`JSON parse failed | url=${urlForMsg} | msg=${msg}`);
   }
 }
 
-/* segment marking */
+/* =========================
+   Segment marking (cached)
+   ========================= */
 
 function stripOuterQuotes(s) {
   const t = String(s ?? "").trim();
@@ -330,8 +336,9 @@ function normalizeArabicForSearch(original) {
       continue;
     }
 
+    const folded = foldArabicChar(ch);
     map.push(i);
-    norm += foldArabicChar(ch);
+    norm += folded;
   }
 
   return { norm: norm.trim().replace(/\s+/g, " "), map };
@@ -441,6 +448,7 @@ function markSegmentUncached(text, ayah, lang) {
   if (!sN || !nN) return s;
 
   if (sN.includes(nN)) return <span className={cls}>{s}</span>;
+
   return s;
 }
 
@@ -464,6 +472,10 @@ function useMarkSegmentCached() {
 
   return { markSegment, clearCache: clear };
 }
+
+/* =========================
+   UI
+   ========================= */
 
 function MinimalPlayerBar({ isPlaying, onPlayPause, onPrev, onNext, onOpenSingle }) {
   return (
@@ -491,6 +503,9 @@ function MinimalPlayerBar({ isPlaying, onPlayPause, onPrev, onNext, onOpenSingle
   );
 }
 
+/**
+ * iOS-like vertical wheel (3D) - ORIGINAL (smooth)
+ */
 function IOSPickerWheelVertical3D({ disabled, value, onStep }) {
   const ref = useRef(null);
 
@@ -671,188 +686,6 @@ function IOSPickerWheelVertical3D({ disabled, value, onStep }) {
     </div>
   );
 }
-  }, []);
-
-  const stop = () => {
-    if (rafRef.current) cancelAnimationFrame(rafRef.current);
-    rafRef.current = 0;
-    velRef.current = 0;
-    accumPxRef.current = 0;
-  };
-
-  const tickSteps = () => {
-    let did = false;
-    let steps = 0;
-
-    while (accumPxRef.current <= -STEP_PX && steps < MAX_STEPS_PER_TICK) {
-      onStep(+1);
-      accumPxRef.current += STEP_PX;
-      did = true;
-      steps += 1;
-    }
-
-    while (accumPxRef.current >= STEP_PX && steps < MAX_STEPS_PER_TICK) {
-      onStep(-1);
-      accumPxRef.current -= STEP_PX;
-      did = true;
-      steps += 1;
-    }
-
-    if (did) {
-      const now = performance.now();
-      if (now - (lastVibeRef.current || 0) > 70) {
-        lastVibeRef.current = now;
-        tactilePulse(8);
-      }
-    }
-  };
-
-  const startInertia = () => {
-    const v0 = velRef.current;
-    velRef.current = v0 * 2.8;
-
-    if (!Number.isFinite(v0) || Math.abs(v0) < 0.03) {
-      stop();
-      return;
-    }
-
-    const DECAY = 0.0016;
-    const MAX_MS = 2600;
-
-    const startTs = performance.now();
-    let last = performance.now();
-
-    const frame = () => {
-      const now = performance.now();
-      const dt = now - last;
-      last = now;
-
-      const sign = Math.sign(velRef.current || v0);
-      const sp = Math.abs(velRef.current || v0);
-      const nextSp = Math.max(0, sp * (1 - DECAY * dt));
-      velRef.current = sign * nextSp;
-
-      accumPxRef.current += velRef.current * dt;
-      tickSteps();
-
-      if (nextSp < 0.03 || now - startTs > MAX_MS) {
-        stop();
-        return;
-      }
-      rafRef.current = requestAnimationFrame(frame);
-    };
-
-    rafRef.current = requestAnimationFrame(frame);
-  };
-
-  const onPointerDown = (e) => {
-    if (disabled) return;
-    stop();
-    draggingRef.current = true;
-    lastYRef.current = e.clientY;
-    lastTsRef.current = performance.now();
-    ref.current?.setPointerCapture?.(e.pointerId);
-  };
-
-  const onPointerMove = (e) => {
-    if (disabled || !draggingRef.current) return;
-
-    const now = performance.now();
-    const dy = e.clientY - lastYRef.current;
-    const dt = Math.max(1, now - (lastTsRef.current || now));
-
-    lastYRef.current = e.clientY;
-    lastTsRef.current = now;
-
-    velRef.current = dy / dt;
-
-    const sp = Math.abs(velRef.current);
-    const mult = clamp(1 + sp * 26, 1, 7.5);
-
-    accumPxRef.current += dy * mult;
-    tickSteps();
-  };
-
-  const onPointerUp = () => {
-    draggingRef.current = false;
-    startInertia();
-  };
-
-  const onWheel = (e) => {
-    if (disabled) return;
-    e.preventDefault();
-    stop();
-
-    const dy = e.deltaY;
-    const steps = clamp(Math.round(Math.abs(dy) / 9), 1, 28);
-    const dir = dy < 0 ? +1 : -1;
-
-    for (let i = 0; i < steps; i += 1) onStep(dir);
-
-    const now = performance.now();
-    if (now - (lastVibeRef.current || 0) > 70) {
-      lastVibeRef.current = now;
-      tactilePulse(8);
-    }
-
-    velRef.current = clamp(dy / 360, -3.6, 3.6);
-    startInertia();
-  };
-
-  const items = useMemo(() => {
-    const v = Number(value) || 0;
-    return [v - 3, v - 2, v - 1, v, v + 1, v + 2, v + 3];
-  }, [value]);
-
-  const angles = [-82, -54, -28, 0, 28, 54, 82];
-  const radius = 90;
-
-  return (
-    <div className={`spPicker3D ${disabled ? "disabled" : ""}`}>
-      <div className="spPickerShine" />
-      <div className="spPickerFadeTop" />
-      <div className="spPickerFadeBottom" />
-      <div className="spPickerBar" />
-
-      <div
-        ref={ref}
-        className="spPickerViewport"
-        role="slider"
-        aria-label="Ayet çarkı"
-        tabIndex={disabled ? -1 : 0}
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
-        onPointerCancel={onPointerUp}
-        onWheel={onWheel}
-      >
-        <div className="spPickerItems3D">
-          {items.map((n, i) => {
-            const ang = angles[i] ?? 0;
-            const active = n === Number(value);
-            const abs = Math.abs(ang);
-            const opacity = clamp(1 - abs / 92, 0.12, 1);
-            const scale = clamp(1 - abs / 220, 0.86, 1);
-
-            return (
-              <div
-                key={n}
-                className={`spPickerItem3D ${active ? "active" : ""}`}
-                style={{
-                  opacity,
-                  filter: "none",
-                  transform: `rotateX(${ang}deg) translateZ(${radius}px) scale(${scale})`,
-                }}
-              >
-                {n <= 0 ? "—" : String(n).padStart(2, "0")}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    </div>
-  );
-}
 
 function SinglePlayerPanel({
   open,
@@ -901,7 +734,7 @@ function SinglePlayerPanel({
 
   return (
     <div className="singlePlayerBackdrop" role="dialog" aria-modal="true" aria-label="Single Player">
-      <div className="singlePlayerCard" role="document">
+      <div className="singlePlayerCard">
         <div className="singlePlayerLines">
           <div className="singlePlayerLine singlePlayerLineAr" dir="rtl">
             {markSegment((verse?.ar || "—").trim(), ay, "ar")}
@@ -969,10 +802,13 @@ const VerseRow = React.memo(function VerseRow({ v, idx, active, onRowClick, setR
       ref={(el) => setRowRef(idx, el)}
     >
       <div className="cell colNo">{v.ayah}</div>
+
       <div className="cell colAr" dir="rtl">
         {markSegment(arText, ay, "ar")}
       </div>
+
       <div className="cell colDe">{markSegment(deText, ay, "de")}</div>
+
       <div className="cell colTr">{markSegment(trText, ay, "tr")}</div>
     </button>
   );
@@ -1042,16 +878,25 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    try {
+      const ua = navigator.userAgent || "";
+      const isSafari = /safari/i.test(ua) && !/chrome|crios|chromium|android/i.test(ua);
+      document.documentElement.classList.toggle("isSafari", isSafari);
+    } catch {}
+  }, []);
+
+  useEffect(() => {
     versesRef.current = verses;
     activeIndexRef.current = activeIndex;
     durationRef.current = duration;
     isPlayingRef.current = isPlaying;
   }, [verses, activeIndex, duration, isPlaying]);
 
-  // Single player açıkken arka plan scroll kilidi
+  // Lock background while single player open (scroll freeze)
   useEffect(() => {
     if (!singleOn) {
       document.body.classList.remove("spOpen");
+      document.body.style.top = "";
       return;
     }
 
@@ -1087,7 +932,6 @@ export default function App() {
     return { starts: s, ends: e, monotonic: ok };
   }, [verses]);
 
-  // Load verses
   useEffect(() => {
     let cancelled = false;
 
@@ -1135,7 +979,6 @@ export default function App() {
     };
   }, [versesSrc, clearCache]);
 
-  // Audio listeners
   useEffect(() => {
     const a = audioRef.current;
     if (!a) return;
@@ -1265,7 +1108,6 @@ export default function App() {
     });
   }, [seekTo]);
 
-  // Active index update + repeat engine
   useEffect(() => {
     const a = audioRef.current;
     if (!a) return;
@@ -1288,7 +1130,6 @@ export default function App() {
 
     let idx = activeIndexRef.current;
     const t = currentTimeRef.current;
-
     if (idx < 0 || !verses[idx]) idx = 0;
 
     const v = verses[idx];
@@ -1314,7 +1155,6 @@ export default function App() {
     const now = performance.now();
     if (now - (repeatStateRef.current.lastFire || 0) < 350) return;
     repeatStateRef.current.lastFire = now;
-
     repeatStateRef.current.armed = false;
 
     const done = repeatStateRef.current.done || 0;
@@ -1333,6 +1173,7 @@ export default function App() {
   }, [tick, verses, monotonic, starts, ends, repeatMode]);
 
   const activeVerse = useMemo(() => (activeIndex >= 0 ? verses[activeIndex] : null), [activeIndex, verses]);
+  const dialDisabled = !verses.length;
 
   const header = (
     <div className="surahHeader">
@@ -1376,7 +1217,7 @@ export default function App() {
             setSingleOn(false);
             pause();
           }}
-          dialDisabled={!verses.length}
+          dialDisabled={dialDisabled}
           onDialStep={(dir) => {
             const vs = versesRef.current;
             if (!vs.length) return;
@@ -1401,7 +1242,13 @@ export default function App() {
           />
         </div>
 
-        <VersesTable verses={verses} activeIndex={activeIndex} onRowClick={onRowClick} setRowRef={setRowRef} markSegment={markSegment} />
+        <VersesTable
+          verses={verses}
+          activeIndex={activeIndex}
+          onRowClick={onRowClick}
+          setRowRef={setRowRef}
+          markSegment={markSegment}
+        />
       </main>
     </div>
   );
