@@ -570,8 +570,8 @@ function IOSPickerWheelVertical3D({ disabled, value, onStep }) {
 
   const lastVibeRef = useRef(0);
 
-  const STEP_PX = 12;
-  const MAX_STEPS_PER_TICK = 6;
+  const STEP_PX = 8;
+  const MAX_STEPS_PER_TICK = 12;
 
   useEffect(() => {
     return () => {
@@ -615,13 +615,13 @@ function IOSPickerWheelVertical3D({ disabled, value, onStep }) {
 
   const startInertia = () => {
     const v0 = velRef.current;
-    if (!Number.isFinite(v0) || Math.abs(v0) < 0.05) {
+    if (!Number.isFinite(v0) || Math.abs(v0) < 0.03) {
       stop();
       return;
     }
 
-    const DECAY = 0.0045;
-    const MAX_MS = 1100;
+    const DECAY = 0.0032;
+    const MAX_MS = 1400;
     const startTs = performance.now();
     let last = performance.now();
 
@@ -638,7 +638,7 @@ function IOSPickerWheelVertical3D({ disabled, value, onStep }) {
       accumPxRef.current += velRef.current * dt;
       tickSteps();
 
-      if (nextSp < 0.05 || now - startTs > MAX_MS) {
+      if (nextSp < 0.03 || now - startTs > MAX_MS) {
         stop();
         return;
       }
@@ -668,7 +668,7 @@ function IOSPickerWheelVertical3D({ disabled, value, onStep }) {
     lastTsRef.current = now;
 
     velRef.current = dy / dt;
-    accumPxRef.current += dy;
+    accumPxRef.current += dy * 1.35;
     tickSteps();
   };
 
@@ -683,7 +683,7 @@ function IOSPickerWheelVertical3D({ disabled, value, onStep }) {
     stop();
 
     const dy = e.deltaY;
-    const steps = clamp(Math.round(Math.abs(dy) / 18), 1, 10);
+    const steps = clamp(Math.round(Math.abs(dy) / 12), 1, 18);
     const dir = dy < 0 ? +1 : -1;
 
     for (let i = 0; i < steps; i += 1) onStep(dir);
@@ -694,7 +694,7 @@ function IOSPickerWheelVertical3D({ disabled, value, onStep }) {
       tactilePulse(8);
     }
 
-    velRef.current = clamp(dy / 820, -1.0, 1.0);
+    velRef.current = clamp(dy / 520, -2.2, 2.2);
     startInertia();
   };
 
