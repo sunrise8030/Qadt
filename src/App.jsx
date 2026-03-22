@@ -1,4 +1,6 @@
-// FILE: src/App.jsx
+// =========================
+// FILE: src/App.jsx (FULL - CLEAN + FAST WHEEL)
+// =========================
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import "./styles.css";
 
@@ -18,7 +20,7 @@ const SURAHES = [
 /**
  * SEGMENTS:
  * - ar: highlight + color
- * - tr/de: color only (segment if found; if close enough => color whole line)
+ * - tr/de: color only (segment if found, otherwise no coloring)
  */
 const SEGMENTS = {
   6: {
@@ -45,7 +47,12 @@ const SEGMENTS = {
     de: "So vergelten Wir den Gutes Tuenden.",
     tr: "“Kendilerini iyiliğe adamış, daima Allah’ı görüyormuşçasına ve Allah’ın kendilerini gördüğünün şuuru içinde davrananları işte böyle mükâfatlandırırız.”",
   },
-  23: { color: "red", ar: "مَعَاذَ ٱللَّهِ", de: "Allah schütze mich (davor)!", tr: "“Allah korusun!”" },
+  23: {
+    color: "red",
+    ar: "مَعَاذَ ٱللَّهِ",
+    de: "Allah schütze mich (davor)!",
+    tr: "“Allah korusun!”",
+  },
   34: {
     color: "green",
     ar: "إِنَّهُۥ هُوَ ٱلسَّمِيعُ ٱلْعَلِيمُ",
@@ -94,22 +101,72 @@ const SEGMENTS = {
     de: "außer daß Allah es wollte. Wir erhöhen, wen Wir wollen, um Rangstufen. Und über jedem, der Wissen besitzt, steht einer, der (noch mehr) weiß.",
     tr: "“fakat Allah ne dilerse o olur (ve Allah, bir şeyi dileyince onun sebeplerini de hazırlar). Biz, kimi dilersek onu böyle mertebe mertebe yükseltiriz. Ve her bir bilgi sahibinin üstünde daha iyi bir bilen (ve hepsinin üstünde her şeyi bilen olarak Allah) vardır.”",
   },
-  80: { color: "green", ar: "وَهُوَ خَيْرُ ٱلْحَٰكِمِينَ", de: "Er ist der Beste derer, die Urteile fällen.", tr: "“Allah, her zaman en hayırlı hükmü verendir.”" },
-  86: { color: "red", ar: "إِنَّمَآ أَشْكُوا۟ بَثِّى وَحُزْنِىٓ إِلَى ٱللَّهِ", de: "Ich klage meinen unerträglichen Kummer und meine Trauer nur Allah (allein)", tr: "“Ben, bütün dertlerimi, keder ve hüznümü Allah’a arz ediyor, O’na şikâyette bulunuyorum.”" },
+  80: {
+    color: "green",
+    ar: "وَهُوَ خَيْرُ ٱلْحَٰكِمِينَ",
+    de: "Er ist der Beste derer, die Urteile fällen.",
+    tr: "“Allah, her zaman en hayırlı hükmü verendir.”",
+  },
+  86: {
+    color: "red",
+    ar: "إِنَّمَآ أَشْكُوا۟ بَثِّى وَحُزْنِىٓ إِلَى ٱللَّهِ",
+    de: "Ich klage meinen unerträglichen Kummer und meine Trauer nur Allah (allein)",
+    tr: "“Ben, bütün dertlerimi, keder ve hüznümü Allah’a arz ediyor, O’na şikâyette bulunuyorum.”",
+  },
   87: {
     color: "green",
     ar: "وَلَا تَا۟يْـَٔسُوا۟ مِن رَّوْحِ ٱللَّهِ ۖ إِنَّهُۥ لَا يَا۟يْـَٔسُ مِن رَّوْحِ ٱللَّهِ إِلَّا ٱلْقَوْمُ ٱلْكَٰفِرُونَ",
     de: "Und gebt nicht die Hoffnung auf das Erbarmen Allahs auf. Es gibt die Hoffnung auf das Erbarmen Allahs nur das ungläubige Volk auf.",
     tr: "“Allah’ın rahmetinden asla ümidinizi kesmeyin. Şurası bir gerçek ki, O’na inanmayan kâfirler güruhu dışında hiç kimse Allah’ın rahmetinden ümit kesmez.”",
   },
-  88: { color: "green", ar: "إِنَّ ٱللَّهَ يَجْزِى ٱلْمُتَصَدِّقِينَ", de: "Allah vergilt denjenigen, die Almosen geben.", tr: "“Hiç kuşkusuz Allah, fazladan iyilikte bulunanları bol bol mükâfatlandırır.”" },
-  90: { color: "green", ar: "إِنَّ ٱللَّهُ لَا يُضِيعُ أَجْرَ ٱلْمُحْسِنِينَ", de: "Gewiß, Allah läßt den Lohn der Gutes Tuenden nicht verlorengehen.", tr: "“Doğrusu şu ki, kim O’na karşı derin saygı duyar, O’na karşı gelmekten sakınır ve O’na itaatla birlikte başına gelenlere de sabrederse, hiç şüphesiz Allah, böyle iyiliğe adanmış ve O’nu görürcesine davranan kimselerin mükâfatını asla zayi etmez.”" },
-  91: { color: "green", ar: "تَٱللَّهِ لَقَدْ ءَاثَرَكَ ٱللَّهُ عَلَيْنَا وَإِن كُنَّا لَخَٰطِـِٔينَ", de: "Bei Allah, Allah hat dich uns vorgezogen. Und wir haben wahrlich Verfehlungen begangen.", tr: "“Allah’a yemin olsun ki, gerçekten Allah seni bize tercih etti; biz, başka değil, ancak bir yanlış içinde idik.”" },
-  92: { color: "green", ar: "لَا تَثْرِيبَ عَلَيْكُمُ ٱلْيَوْمَ ۖ يَغْفِرُ ٱللَّهُ لَكُمْ ۖ وَهُوَ أَرْحَمُ ٱلرَّٰحِمِينَ", de: "Keine Schelte soll heute über euch kommen. Allah vergibt euch, Er ist ja der Barmherzigste der Barmherzigen.", tr: "“Hayır! Bugün size hiçbir kınama yok! (Ben hakkımı çoktan helâl ettim;) Allah da sizi affetsin. Çünkü O, bütün merhamet edenlerin üstünde mutlak merhamet sahibidir.”" },
-  98: { color: "green", ar: "إِنَّهُۥ هُوَ ٱلْغَفُورُ ٱلرَّحِيمُ", de: "Er ist ja der Allvergebende und Barmherzige.", tr: "“Hiç şüphesiz O, Ğafûr (günahları çok bağışlayan)dır; Rahîm (bilhassa tevbe ile Kendisine yönelen mü’ min kullarına karşı hususî rahmeti pek bol olan)dır.”" },
-  100: { color: "green", ar: "إِنَّ رَبِّى لَطِيفٌۭ لِّمَا يَشَآءُ ۚ إِنَّهُۥ هُوَ ٱلْعَلِيمُ ٱلْحَكِيمُ", de: "Gewiß, mein Herr ist feinfühlig (in der Durchführung dessen), was Er will. Er ist ja der Allwissende und Allweise.", tr: "“Gerçekten Rabbim, her ne dilerse onu pek güzel şekilde ve insanların göremeyeceği bir incelik içinde yerine getirir. Şüphesiz O, evet O, Alîm (her şeyi hakkıyla bilen)dir; Hakîm (bütün hüküm ve icraatında pek çok hikmetler bulunan)dır.”" },
-  101: { color: "red", ar: "تَوَفَّنِى مُسْلِمًۭا وَأَلْحِقْنِى بِٱلصَّٰلِحِينَ", de: "Berufe mich als (Dir) ergeben ab und nimm mich unter die Rechtschaffenen auf.", tr: "“Beni Müslüman olarak vefat ettir ve beni salihler içine kat!”" },
-  108: { color: "green", ar: "قُلْ هَٰذِهِۦ سَبِيلِىٓ أَدْعُوٓا۟ إِلَى ٱللَّهِ ۚ عَلَىٰ بَصِيرَةٍ أَنَا۠ وَمَنِ ٱتَّبَعَنِى ۖ وَسُبْحَٰنَ ٱللَّهِ وَمَآ أَنَا۠ مِنَ ٱلْمُشْرِكِينَ", de: "Sag: Das ist mein Weg: Ich rufe zu Allah aufgrund eines sichtbaren Hinweises, ich und diejenigen, die mir folgen. Preis sei Allah! Und ich gehöre nicht zu den Götzendienern.", tr: "“İşte benim (iman, ihlâs ve Tevhid) yolum: Ben, (körü körüne ve taklide dayalı olarak değil,) görerek, delile dayanarak ve insanların idrakine hitap ederek Allah’a çağırıyorum: ben ve bana tâbi olanlar. Ve Allah’ı şirkin her türlüsünden tenzih ederim, asla O’na ortak tanıyanlardan değilim ben.”" },
+  88: {
+    color: "green",
+    ar: "إِنَّ ٱللَّهَ يَجْزِى ٱلْمُتَصَدِّقِينَ",
+    de: "Allah vergilt denjenigen, die Almosen geben.",
+    tr: "“Hiç kuşkusuz Allah, fazladan iyilikte bulunanları bol bol mükâfatlandırır.”",
+  },
+  90: {
+    color: "green",
+    ar: "إِنَّ ٱللَّهُ لَا يُضِيعُ أَجْرَ ٱلْمُحْسِنِينَ",
+    de: "Gewiß, Allah läßt den Lohn der Gutes Tuenden nicht verlorengehen.",
+    tr: "“Doğrusu şu ki, kim O’na karşı derin saygı duyar, O’na karşı gelmekten sakınır ve O’na itaatla birlikte başına gelenlere de sabrederse, hiç şüphesiz Allah, böyle iyiliğe adanmış ve O’nu görürcesine davranan kimselerin mükâfatını asla zayi etmez.”",
+  },
+  91: {
+    color: "green",
+    ar: "تَٱللَّهِ لَقَدْ ءَاثَرَكَ ٱللَّهُ عَلَيْنَا وَإِن كُنَّا لَخَٰطِـِٔينَ",
+    de: "Bei Allah, Allah hat dich uns vorgezogen. Und wir haben wahrlich Verfehlungen begangen.",
+    tr: "“Allah’a yemin olsun ki, gerçekten Allah seni bize tercih etti; biz, başka değil, ancak bir yanlış içinde idik.”",
+  },
+  92: {
+    color: "green",
+    ar: "لَا تَثْرِيبَ عَلَيْكُمُ ٱلْيَوْمَ ۖ يَغْفِرُ ٱللَّهُ لَكُمْ ۖ وَهُوَ أَرْحَمُ ٱلرَّٰحِمِينَ",
+    de: "Keine Schelte soll heute über euch kommen. Allah vergibt euch, Er ist ja der Barmherzigste der Barmherzigen.",
+    tr: "“Hayır! Bugün size hiçbir kınama yok! (Ben hakkımı çoktan helâl ettim;) Allah da sizi affetsin. Çünkü O, bütün merhamet edenlerin üstünde mutlak merhamet sahibidir.”",
+  },
+  98: {
+    color: "green",
+    ar: "إِنَّهُۥ هُوَ ٱلْغَفُورُ ٱلرَّحِيمُ",
+    de: "Er ist ja der Allvergebende und Barmherzige.",
+    tr: "“Hiç şüphesiz O, Ğafûr (günahları çok bağışlayan)dır; Rahîm (bilhassa tevbe ile Kendisine yönelen mü’ min kullarına karşı hususî rahmeti pek bol olan)dır.”",
+  },
+  100: {
+    color: "green",
+    ar: "إِنَّ رَبِّى لَطِيفٌۭ لِّمَا يَشَآءُ ۚ إِنَّهُۥ هُوَ ٱلْعَلِيمُ ٱلْحَكِيمُ",
+    de: "Gewiß, mein Herr ist feinfühlig (in der Durchführung dessen), was Er will. Er ist ja der Allwissende und Allweise.",
+    tr: "“Gerçekten Rabbim, her ne dilerse onu pek güzel şekilde ve insanların göremeyeceği bir incelik içinde yerine getirir. Şüphesiz O, evet O, Alîm (her şeyi hakkıyla bilen)dir; Hakîm (bütün hüküm ve icraatında pek çok hikmetler bulunan)dır.”",
+  },
+  101: {
+    color: "red",
+    ar: "تَوَفَّنِى مُسْلِمًۭا وَأَلْحِقْنِى بِٱلصَّٰلِحِينَ",
+    de: "Berufe mich als (Dir) ergeben ab und nimm mich unter die Rechtschaffenen auf.",
+    tr: "“Beni Müslüman olarak vefat ettir ve beni salihler içine kat!”",
+  },
+  108: {
+    color: "green",
+    ar: "قُلْ هَٰذِهِۦ سَبِيلِىٓ أَدْعُوٓا۟ إِلَى ٱللَّهِ ۚ عَلَىٰ بَصِيرَةٍ أَنَا۠ وَمَنِ ٱتَّبَعَنِى ۖ وَسُبْحَٰنَ ٱللَّهِ وَمَآ أَنَا۠ مِنَ ٱلْمُشْرِكِينَ",
+    de: "Sag: Das ist mein Weg: Ich rufe zu Allah aufgrund eines sichtbaren Hinweises, ich und diejenigen, die mir folgen. Preis sei Allah! Und ich gehöre nicht zu den Götzendienern.",
+    tr: "“İşte benim (iman, ihlâs ve Tevhid) yolum: Ben, (körü körüne ve taklide dayalı olarak değil,) görerek, delile dayanarak ve insanların idrakine hitap ederek Allah’a çağırıyorum: ben ve bana tâbi olanlar. Ve Allah’ı şirkin her türlüsünden tenzih ederim, asla O’na ortak tanıyanlardan değilim ben.”",
+  },
 };
 
 function resolvePublicUrl(path) {
@@ -131,9 +188,10 @@ function tactilePulse(ms = 8) {
   } catch {}
 }
 
-/* ============ active verse index ============ */
 function isMonotonicNonDecreasing(arr) {
-  for (let i = 1; i < arr.length; i += 1) if (!(arr[i] >= arr[i - 1])) return false;
+  for (let i = 1; i < arr.length; i += 1) {
+    if (!(arr[i] >= arr[i - 1])) return false;
+  }
   return true;
 }
 
@@ -193,7 +251,6 @@ function findActiveVerseIndexLinearOverlapSafe(verses, t) {
   return closest;
 }
 
-/* ============ sticky scroll helper ============ */
 function getStickyOverlayTopPx() {
   const el = document.querySelector(".playerSticky");
   if (!el) return null;
@@ -213,17 +270,22 @@ function ensureRowVisible(el, padding = 10) {
   const effectiveBottom =
     overlayTop != null ? Math.min(viewportBottom, overlayTop - padding) : viewportBottom;
 
-  if (r.top < viewportTop || r.bottom > effectiveBottom) {
-    el.scrollIntoView({ behavior: "smooth", block: "nearest" });
-  }
+  const above = r.top < viewportTop;
+  const below = r.bottom > effectiveBottom;
+
+  if (above || below) el.scrollIntoView({ behavior: "smooth", block: "nearest" });
 }
 
-/* ============ json tolerant ============ */
 function parseJsonTolerant(text, urlForMsg = "") {
   const raw = String(text ?? "");
   let s = raw.replace(/^\uFEFF/, "").trim();
 
-  if (s.startsWith("<!doctype") || s.startsWith("<html") || s.startsWith("<head") || s.startsWith("<")) {
+  if (
+    s.startsWith("<!doctype") ||
+    s.startsWith("<html") ||
+    s.startsWith("<head") ||
+    s.startsWith("<")
+  ) {
     throw new Error(`Expected JSON but got HTML | url=${urlForMsg} | head=${s.slice(0, 80)}`);
   }
 
@@ -245,7 +307,6 @@ function parseJsonTolerant(text, urlForMsg = "") {
   }
 }
 
-/* ============ segment marking ============ */
 function stripOuterQuotes(s) {
   const t = String(s ?? "").trim();
   return t.replace(/^["“”]+/, "").replace(/["“”]+$/, "").trim();
@@ -281,6 +342,7 @@ function buildArabicLooseRegex(snippet) {
 
   const chars = Array.from(base);
   const parts = [];
+
   for (const ch of chars) {
     if (/\s/.test(ch)) {
       parts.push(WS);
@@ -289,6 +351,7 @@ function buildArabicLooseRegex(snippet) {
     const esc = escapeRegexLiteral(ch);
     parts.push(`${TAT}${esc}${DIACR}`);
   }
+
   return new RegExp(parts.join(""), "g");
 }
 
@@ -441,6 +504,7 @@ function markSegmentUncached(text, ayah, lang) {
   const direct = splitAndMarkFirst(s, needle, cls);
   if (direct !== s) return direct;
 
+  // tolerant: if "close enough" match => color whole line (only if included)
   const sN = normalizeCommon(s);
   const nN = normalizeCommon(needle);
   if (!sN || !nN) return s;
@@ -470,7 +534,6 @@ function useMarkSegmentCached() {
   return { markSegment, clearCache: clear };
 }
 
-/* ============ UI ============ */
 function MinimalPlayerBar({ isPlaying, onPlayPause, onPrev, onNext, onOpenSingle }) {
   return (
     <div className="playerControls">
@@ -478,6 +541,7 @@ function MinimalPlayerBar({ isPlaying, onPlayPause, onPrev, onNext, onOpenSingle
         <div className="liveTime">
           <span className="liveLabel">PLAYER</span>
         </div>
+
         <div className="liveActions">
           <button className="btnPrimary" type="button" onClick={onPlayPause}>
             {isPlaying ? "Pause" : "Play"}
@@ -498,7 +562,7 @@ function MinimalPlayerBar({ isPlaying, onPlayPause, onPrev, onNext, onOpenSingle
 }
 
 /**
- * iOS-like vertical wheel (3D) - fast drag => faster scroll + strong inertia
+ * ✅ FAST wheel: faster drag => faster scroll + strong inertia
  */
 function IOSPickerWheelVertical3D({ disabled, value, onStep }) {
   const ref = useRef(null);
@@ -507,18 +571,16 @@ function IOSPickerWheelVertical3D({ disabled, value, onStep }) {
   const lastYRef = useRef(0);
   const lastTsRef = useRef(0);
 
-  const velRef = useRef(0); // px/ms
+  // velocity in px/ms
+  const velRef = useRef(0);
   const accumPxRef = useRef(0);
   const rafRef = useRef(0);
+  const lastVibeRef = useRef(0);
 
-  // Tuning (feel)
-  const STEP_PX = 10;
+  // feel knobs
+  const STEP_PX = 10; // smaller => more sensitive
   const MAX_STEPS_PER_FRAME = 14;
-  const VEL_TO_PX_GAIN = 220;
-  const INERTIA_BOOST = 2.6;
-  const DECAY = 0.00135;
-  const MAX_MS = 2400;
-  const STOP_VEL = 0.02;
+  const MIN_VEL_TO_INERTIA = 0.035;
 
   useEffect(() => {
     return () => {
@@ -533,52 +595,66 @@ function IOSPickerWheelVertical3D({ disabled, value, onStep }) {
     accumPxRef.current = 0;
   };
 
-  const applyStepsFromAccum = () => {
+  const vibe = (ms = 8) => {
+    const now = performance.now();
+    if (now - (lastVibeRef.current || 0) < 60) return;
+    lastVibeRef.current = now;
+    tactilePulse(ms);
+  };
+
+  const tickSteps = () => {
+    let did = false;
     let steps = 0;
 
     while (accumPxRef.current <= -STEP_PX && steps < MAX_STEPS_PER_FRAME) {
       onStep(+1);
       accumPxRef.current += STEP_PX;
+      did = true;
       steps += 1;
     }
+
     while (accumPxRef.current >= STEP_PX && steps < MAX_STEPS_PER_FRAME) {
       onStep(-1);
       accumPxRef.current -= STEP_PX;
+      did = true;
       steps += 1;
     }
 
-    if (steps) tactilePulse(6);
-
-    // Prevent "takıntı" accumulation
-    accumPxRef.current = clamp(accumPxRef.current, -STEP_PX * 3, STEP_PX * 3);
+    if (did) vibe(8);
   };
 
   const startInertia = () => {
     const v0 = velRef.current;
-    if (!Number.isFinite(v0) || Math.abs(v0) < STOP_VEL) {
+    if (!Number.isFinite(v0) || Math.abs(v0) < MIN_VEL_TO_INERTIA) {
       stop();
       return;
     }
 
-    velRef.current = v0 * INERTIA_BOOST;
+    // stronger inertia, fast drag => fast glide
+    velRef.current = clamp(v0 * 2.6, -2.4, 2.4);
+
+    const DECAY = 0.00155;
+    const MAX_MS = 2400;
 
     const startTs = performance.now();
     let last = startTs;
 
     const frame = () => {
       const now = performance.now();
-      const dt = Math.min(32, Math.max(8, now - last));
+      const dt = Math.min(40, Math.max(8, now - last));
       last = now;
 
-      const sign = Math.sign(velRef.current);
-      const sp = Math.abs(velRef.current);
+      const v = velRef.current;
+      const sign = Math.sign(v || 1);
+      const sp = Math.abs(v);
+
       const nextSp = Math.max(0, sp * (1 - DECAY * dt));
       velRef.current = sign * nextSp;
 
       accumPxRef.current += velRef.current * dt;
-      applyStepsFromAccum();
+      tickSteps();
 
-      if (nextSp < STOP_VEL || now - startTs > MAX_MS) {
+      if (nextSp < MIN_VEL_TO_INERTIA || now - startTs > MAX_MS) {
         stop();
         return;
       }
@@ -607,13 +683,15 @@ function IOSPickerWheelVertical3D({ disabled, value, onStep }) {
     lastYRef.current = e.clientY;
     lastTsRef.current = now;
 
-    const v = dy / dt; // px/ms
-    velRef.current = v;
+    const v = dy / dt;
+    // smooth velocity to avoid jitter
+    velRef.current = velRef.current * 0.65 + v * 0.35;
 
-    const extra = Math.sign(dy) * Math.min(48, Math.abs(v) * VEL_TO_PX_GAIN);
-    accumPxRef.current += dy + extra;
+    const speed = Math.abs(velRef.current);
+    const accel = clamp(1 + speed * 0.55, 1, 2.6);
+    accumPxRef.current += dy * accel;
 
-    applyStepsFromAccum();
+    tickSteps();
   };
 
   const onPointerUp = () => {
@@ -627,13 +705,15 @@ function IOSPickerWheelVertical3D({ disabled, value, onStep }) {
     stop();
 
     const dy = e.deltaY;
-    const steps = clamp(Math.round(Math.abs(dy) / 14), 1, 18);
+    const speed = Math.abs(dy);
+    const steps = clamp(Math.round(speed / 14), 1, 18);
     const dir = dy < 0 ? +1 : -1;
 
     for (let i = 0; i < steps; i += 1) onStep(dir);
-    tactilePulse(6);
+    vibe(8);
 
-    velRef.current = clamp(dy / 420, -1.6, 1.6);
+    // seed inertia from wheel
+    velRef.current = clamp((dy / 500) * -1, -2.0, 2.0);
     startInertia();
   };
 
@@ -710,8 +790,8 @@ function SinglePlayerPanel({
 }) {
   useEffect(() => {
     if (!open) return;
+
     const onKey = (e) => {
-      if (e.key === "Escape") onClose();
       if (e.code === "Space") {
         e.preventDefault();
         onPlayPause();
@@ -728,7 +808,12 @@ function SinglePlayerPanel({
         e.preventDefault();
         onToggleRepeat();
       }
+      if (e.key === "Escape") {
+        e.preventDefault();
+        onClose();
+      }
     };
+
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose, onPlayPause, onPrev, onNext, onToggleRepeat]);
@@ -739,7 +824,7 @@ function SinglePlayerPanel({
 
   return (
     <div className="singlePlayerBackdrop" role="dialog" aria-modal="true" aria-label="Single Player">
-      <div className="singlePlayerCard" onClick={(e) => e.stopPropagation()}>
+      <div className="singlePlayerCard">
         <div className="singlePlayerLines">
           <div className="singlePlayerLine singlePlayerLineAr" dir="rtl">
             {markSegment((verse?.ar || "—").trim(), ay, "ar")}
@@ -797,7 +882,9 @@ function SinglePlayerPanel({
 
 const VerseRow = React.memo(function VerseRow({ v, idx, active, onRowClick, setRowRef, markSegment }) {
   const ay = Number(v?.ayah || 0);
+
   const arText = (v.ar || "").trimStart();
+  // ✅ no newlines in table cells:
   const deText = (v.de || "").replace(/\s*\n+\s*/g, " ").trim();
   const trText = (v.tr || "").replace(/\s*\n+\s*/g, " ").trim();
 
@@ -809,16 +896,25 @@ const VerseRow = React.memo(function VerseRow({ v, idx, active, onRowClick, setR
       ref={(el) => setRowRef(idx, el)}
     >
       <div className="cell colNo">{v.ayah}</div>
+
       <div className="cell colAr" dir="rtl">
         {markSegment(arText, ay, "ar")}
       </div>
+
       <div className="cell colDe">{markSegment(deText, ay, "de")}</div>
+
       <div className="cell colTr">{markSegment(trText, ay, "tr")}</div>
     </button>
   );
 });
 
-const VersesTable = React.memo(function VersesTable({ verses, activeIndex, onRowClick, setRowRef, markSegment }) {
+const VersesTable = React.memo(function VersesTable({
+  verses,
+  activeIndex,
+  onRowClick,
+  setRowRef,
+  markSegment,
+}) {
   return (
     <div className="tableWrap" role="region" aria-label="Verses">
       <div className="tableHeader">
@@ -897,7 +993,7 @@ export default function App() {
     isPlayingRef.current = isPlaying;
   }, [verses, activeIndex, duration, isPlaying]);
 
-  // lock background scroll while single player open (restore scroll)
+  // ✅ lock background scroll while single player open (scroll restore)
   useEffect(() => {
     if (!singleOn) {
       document.body.classList.remove("spOpen");
@@ -919,8 +1015,14 @@ export default function App() {
     };
   }, [singleOn]);
 
-  const audioSrc = useMemo(() => resolvePublicUrl(selectedSurah.audioUrl), [selectedSurah.audioUrl]);
-  const versesSrc = useMemo(() => resolvePublicUrl(selectedSurah.versesUrl), [selectedSurah.versesUrl]);
+  const audioSrc = useMemo(
+    () => (selectedSurah ? resolvePublicUrl(selectedSurah.audioUrl) : ""),
+    [selectedSurah]
+  );
+  const versesSrc = useMemo(
+    () => (selectedSurah ? resolvePublicUrl(selectedSurah.versesUrl) : ""),
+    [selectedSurah]
+  );
 
   const { starts, ends, monotonic } = useMemo(() => {
     const s = [];
@@ -963,7 +1065,12 @@ export default function App() {
         const text = await res.text();
 
         if (!res.ok) {
-          throw new Error(`Fetch failed: ${res.status} ${res.statusText} | url=${versesSrc}`);
+          throw new Error(
+            `Fetch failed: ${res.status} ${res.statusText} | url=${versesSrc} | body=${text.slice(
+              0,
+              160
+            )}`
+          );
         }
 
         const data = parseJsonTolerant(text, versesSrc);
@@ -1109,8 +1216,9 @@ export default function App() {
 
       const v = vs[idx];
       const s = Number(v?.start);
-      if (Number.isFinite(s)) seekTo(s, true);
-
+      if (Number.isFinite(s)) {
+        seekTo(s, true);
+      }
       return next;
     });
   }, [seekTo]);
@@ -1120,6 +1228,7 @@ export default function App() {
     const a = audioRef.current;
     if (!a) return;
 
+    // Active verse
     if (verses.length) {
       const t = currentTimeRef.current;
       const idx = monotonic
@@ -1133,11 +1242,13 @@ export default function App() {
       }
     }
 
+    // Repeat engine
     if (!verses.length) return;
     if (repeatMode <= 0) return;
 
     let idx = activeIndexRef.current;
     const t = currentTimeRef.current;
+
     if (idx < 0 || !verses[idx]) idx = 0;
 
     const v = verses[idx];
@@ -1181,10 +1292,14 @@ export default function App() {
     currentTimeRef.current = s;
   }, [tick, verses, monotonic, starts, ends, repeatMode]);
 
-  const activeVerse = useMemo(() => (activeIndex >= 0 ? verses[activeIndex] : null), [activeIndex, verses]);
+  const activeVerse = useMemo(
+    () => (activeIndex >= 0 ? verses[activeIndex] : null),
+    [activeIndex, verses]
+  );
+
   const dialDisabled = !verses.length;
 
-  const header = (
+  const header = selectedSurah ? (
     <div className="surahHeader">
       <div className="surahHeaderLeft">
         <h2 className="surahTitle">
@@ -1201,7 +1316,7 @@ export default function App() {
         <span className="badge">Loaded: {verses.length}</span>
       </div>
     </div>
-  );
+  ) : null;
 
   const onRowClick = useCallback(
     (idx) => {
