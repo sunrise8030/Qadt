@@ -1378,7 +1378,6 @@ export default function App() {
     </div>
   );
 }
-=======
 import React from "react";
 import "./styles.css";
 
