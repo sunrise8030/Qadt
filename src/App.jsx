@@ -127,7 +127,7 @@ const SEGMENTS = {
     color: "green",
     ar: "إِنَّ ٱللَّهُ لَا يُضِيعُ أَجْرَ ٱلْمُحْسِنِينَ",
     de: "Gewiß, Allah läßt den Lohn der Gutes Tuenden nicht verlorengehen.",
-    tr: "“Doğrusu şu ki, kim O’na karşı derin saygı duyar, O’na karşı gelmekten sakınır ve O’na itaatla birlikte başına gelenlere de sabrederse, hiç şüphesiz Allah, böyle iyiliğe adanmış ve O’nu görürcesine davranan kimselerin mükâfatını asla zayi etmez.”",
+    tr: "“Doğrusu şu ki, kim O’na karşı derin saygı duyar, O’na karşı gelmekten sakınır ve O’na itaatla birlikte başına gelenlere de sabrederse, hiç şüphesiz Allah, böyle iyiliğe adanmış ve O’nu görürcesine davranan kimselerin mükâfatını asla zayi etmeyiz.”",
   },
   91: {
     color: "green",
@@ -185,8 +185,6 @@ function tactilePulse(ms = 8) {
     }
   } catch {}
 }
-
-/* ============ active verse index ============ */
 
 function isMonotonicNonDecreasing(arr) {
   for (let i = 1; i < arr.length; i += 1) {
@@ -251,7 +249,6 @@ function findActiveVerseIndexLinearOverlapSafe(verses, t) {
   return closest;
 }
 
-/* ============ sticky scroll helper ============ */
 function getStickyOverlayTopPx() {
   const el = document.querySelector(".playerSticky");
   if (!el) return null;
@@ -277,7 +274,6 @@ function ensureRowVisible(el, padding = 10) {
   if (above || below) el.scrollIntoView({ behavior: "smooth", block: "nearest" });
 }
 
-/* ============ json tolerant ============ */
 function parseJsonTolerant(text, urlForMsg = "") {
   const raw = String(text ?? "");
   let s = raw.replace(/^\uFEFF/, "").trim();
@@ -308,8 +304,6 @@ function parseJsonTolerant(text, urlForMsg = "") {
     throw new Error(`JSON parse failed | url=${urlForMsg} | msg=${msg}`);
   }
 }
-
-/* ============ segment marking ============ */
 
 function stripOuterQuotes(s) {
   const t = String(s ?? "").trim();
@@ -508,7 +502,6 @@ function markSegmentUncached(text, ayah, lang) {
   const direct = splitAndMarkFirst(s, needle, cls);
   if (direct !== s) return direct;
 
-  // tolerant: if "close enough" match => color whole line is NOT wanted; return original
   const sN = normalizeCommon(s);
   const nN = normalizeCommon(needle);
   if (!sN || !nN) return s;
@@ -538,8 +531,6 @@ function useMarkSegmentCached() {
   return { markSegment, clearCache: clear };
 }
 
-/* ============ UI ============ */
-
 function MinimalPlayerBar({ isPlaying, onPlayPause, onPrev, onNext, onOpenSingle }) {
   return (
     <div className="playerControls">
@@ -566,9 +557,6 @@ function MinimalPlayerBar({ isPlaying, onPlayPause, onPrev, onNext, onOpenSingle
   );
 }
 
-/**
- * iOS-like vertical wheel (3D) - optimized
- */
 function IOSPickerWheelVertical3D({ disabled, value, onStep }) {
   const ref = useRef(null);
 
@@ -872,14 +860,7 @@ function SinglePlayerPanel({
   );
 }
 
-const VerseRow = React.memo(function VerseRow({
-  v,
-  idx,
-  active,
-  onRowClick,
-  setRowRef,
-  markSegment,
-}) {
+const VerseRow = React.memo(function VerseRow({ v, idx, active, onRowClick, setRowRef, markSegment }) {
   const ay = Number(v?.ayah || 0);
 
   const arText = (v.ar || "").trimStart();
@@ -954,7 +935,6 @@ export default function App() {
   const [activeIndex, setActiveIndex] = useState(-1);
   const [singleOn, setSingleOn] = useState(true);
 
-  // repeat: 0 off, 1 => 1 tekrar, 2 => 2 tekrar
   const [repeatMode, setRepeatMode] = useState(0);
   const repeatStateRef = useRef({ idx: -1, done: 0, armed: true, lastFire: 0 });
 
@@ -991,7 +971,6 @@ export default function App() {
     isPlayingRef.current = isPlaying;
   }, [verses, activeIndex, duration, isPlaying]);
 
-  // Lock background while single player open (with scroll restore)
   useEffect(() => {
     if (!singleOn) {
       document.body.classList.remove("spOpen");
@@ -1036,7 +1015,6 @@ export default function App() {
     return { starts: s, ends: e, monotonic: ok };
   }, [verses]);
 
-  // Load verses
   useEffect(() => {
     let cancelled = false;
 
@@ -1089,7 +1067,6 @@ export default function App() {
     };
   }, [versesSrc, clearCache]);
 
-  // Audio listeners (tick throttled)
   useEffect(() => {
     const a = audioRef.current;
     if (!a) return;
@@ -1219,12 +1196,10 @@ export default function App() {
     });
   }, [seekTo]);
 
-  // Active index update + repeat engine (tick-driven)
   useEffect(() => {
     const a = audioRef.current;
     if (!a) return;
 
-    // Active verse
     if (verses.length) {
       const t = currentTimeRef.current;
       const idx = monotonic
@@ -1238,7 +1213,6 @@ export default function App() {
       }
     }
 
-    // Repeat engine
     if (!verses.length) return;
     if (repeatMode <= 0) return;
 
@@ -1378,13 +1352,3 @@ export default function App() {
     </div>
   );
 }
-import React from "react";
-import "./styles.css";
-
-export default function App() {
-  return (
-    <div className="content">
-      <h2 style={{ marginTop: 0 }}>App OK ✅</h2>
-      <p>Default export restored. Now you can paste your full App.jsx again.</p>
-    </div>
-  );
