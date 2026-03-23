@@ -650,3 +650,58 @@ body.spOpen{
     max-height: calc(100dvh - 200px);
   }
 }
+/* =========================
+   iOS Chrome/Firefox FIX (Safari ile aynı görünüm)
+   Bunu styles.css EN SONUNA ekle
+   ========================= */
+
+.singlePlayerBackdrop{
+  height: 100dvh;
+  min-height: 100svh;
+  width: 100vw;
+}
+
+/* Dock için yer bırak */
+.singlePlayerCard{
+  max-height: calc(100dvh - 220px);
+  max-width: min(1100px, calc(100vw - 28px));
+}
+
+/* Mobilde dock sağa değil, iki yana yaslansın */
+.singlePlayerDockBottom{
+  left: 14px !important;
+  right: 14px !important;
+  width: auto !important;
+  max-width: calc(100vw - 28px) !important;
+}
+
+/* Küçük ekranlarda kontroller biraz küçülsün */
+@media (max-width:520px){
+  .singlePlayerDockBottom{ padding: 8px !important; }
+  .singlePlayerDockRow{ gap: 8px; }
+
+  .spBtn{
+    min-width: 56px;
+    height: 56px;
+    font-size: 22px;
+    border-radius: 16px;
+  }
+  .spBtnPrimary{
+    min-width: 104px;
+    height: 62px;
+    font-size: 26px;
+  }
+
+  .spPicker3D{
+    width: 104px;
+    height: 140px;
+  }
+  .spPickerItem3D{ font-size: 30px; }
+}
+
+/* Çok basık ekran (landscape) */
+@media (max-height:680px){
+  .singlePlayerCard{
+    max-height: calc(100dvh - 200px);
+  }
+}
