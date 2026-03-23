@@ -594,3 +594,59 @@ body.spOpen{
 .isSafari .row:hover{
   filter: none !important;
 }
+/* =========================
+   FIX: iOS Safari + iOS Chrome/Firefox SAME layout
+   Put this at the END of styles.css
+   ========================= */
+
+/* 1) Backdrop: dynamic viewport safe */
+.singlePlayerBackdrop{
+  height: 100dvh;
+  min-height: 100svh;
+  width: 100vw;
+}
+
+/* 2) Card: reserve space for bottom dock */
+.singlePlayerCard{
+  max-height: calc(100dvh - 220px); /* dock + safe areas */
+  max-width: min(1100px, calc(100vw - 28px));
+}
+
+/* 3) Dock: don’t “float-right” on mobile; span both sides */
+.singlePlayerDockBottom{
+  left: 14px !important;
+  right: 14px !important;
+  width: auto !important;
+  max-width: calc(100vw - 28px) !important;
+}
+
+/* 4) Small screens: shrink controls a bit so it fits everywhere */
+@media (max-width:520px){
+  .singlePlayerDockBottom{ padding: 8px !important; }
+  .singlePlayerDockRow{ gap: 8px; }
+
+  .spBtn{
+    min-width: 56px;
+    height: 56px;
+    font-size: 22px;
+    border-radius: 16px;
+  }
+  .spBtnPrimary{
+    min-width: 104px;
+    height: 62px;
+    font-size: 26px;
+  }
+
+  .spPicker3D{
+    width: 104px;
+    height: 140px;
+  }
+  .spPickerItem3D{ font-size: 30px; }
+}
+
+/* 5) Very short height devices (landscape etc.) */
+@media (max-height:680px){
+  .singlePlayerCard{
+    max-height: calc(100dvh - 200px);
+  }
+}
