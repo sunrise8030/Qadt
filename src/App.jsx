@@ -1,5 +1,5 @@
 // =========================
-// FILE: src/App.jsx (FULL - ONLY BOTTOM FIXED PLAYER + SURAH SELECT + WHEEL + REPEAT + TIME)
+// FILE: src/App.jsx (FULL - ONLY BOTTOM FIXED PLAYER + SURAH SELECT LEFT + BIG UI + VISIBLE WHEEL + REPEAT + TIME)
 // =========================
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import "./styles.css";
@@ -55,7 +55,7 @@ const SEGMENTS = {
   23: { color: "red", ar: "مَعَاذَ ٱللَّهِ", de: "Allah schütze mich (davor)!", tr: "“Allah korusun!”" },
   34: {
     color: "green",
-    ar: "إِنَّهُۥ هُوَ ٱلسَّمِيعُ ٱlْعَلِيمُ",
+    ar: "إِنَّهُۥ هُوَ ٱلسَّمِيعُ ٱلْعَلِيمُ",
     de: "Er ist ja der Allhörende und Allwissende.",
     tr: "Hiç şüphesiz O’dur Semî‘ (her şeyi, her duayı hakkıyla işiten); Alîm (her şeyi, herkesin durumunu hakkıyla bilen).”",
   },
@@ -101,7 +101,7 @@ const SEGMENTS = {
     de: "außer daß Allah es wollte. Wir erhöhen, wen Wir wollen, um Rangstufen. Und über jedem, der Wissen besitzt, steht einer, der (noch mehr) weiß.",
     tr: "“fakat Allah ne dilerse o olur (ve Allah, bir şeyi dileyince onun sebeplerini de hazırlar). Biz, kimi dilersek onu böyle mertebe mertebe yükseltiriz. Ve her bir bilgi sahibinin üstünde daha iyi bir bilen (ve hepsinin üstünde her şeyi bilen olarak Allah) vardır.”",
   },
-  80: { color: "green", ar: "وَهُوَ خَيْرُ ٱلْحَٰكِمِينَ", de: "Er isT der Beste derer, die Urteile fällen.", tr: "“Allah, her zaman en hayırlı hükmü verendir.”" },
+  80: { color: "green", ar: "وَهُوَ خَيْرُ ٱلْحَٰكِمِينَ", de: "Er ist der Beste derer, die Urteile fällen.", tr: "“Allah, her zaman en hayırlı hükmü verendir.”" },
   86: { color: "red", ar: "إِنَّمَآ أَشْكُوا۟ بَثِّى وَحُزْنِىٓ إِلَى ٱللَّهِ", de: "Ich klage meinen unerträglichen Kummer und meine Trauer nur Allah (allein)", tr: "“Ben, bütün dertlerimi, keder ve hüznümü Allah’a arz ediyor, O’na şikâyette bulunuyorum.”" },
   87: { color: "green", ar: "وَلَا تَا۟يْـَٔسُوا۟ مِن رَّوْحِ ٱللَّهِ ۖ إِنَّهُۥ لَا يَا۟يْـَٔسُ مِن رَّوْحِ ٱللَّهِ إِلَّا ٱلْقَوْمُ ٱلْكَٰفِرُونَ", de: "Und gebt nicht die Hoffnung auf das Erbarmen Allahs auf. Es gibt die Hoffnung auf das Erbarmen Allahs nur das ungläubige Volk auf.", tr: "“Allah’ın rahmetinden asla ümidinizi kesmeyin. Şurası bir gerçek ki, O’na inanmayan kâfirler güruhu dışında hiç kimse Allah’ın rahmetinden ümit kesmez.”" },
   88: { color: "green", ar: "إِنَّ ٱللَّهَ يَجْزِى ٱلْمُتَصَدِّقِينَ", de: "Allah vergilt denjenigen, die Almosen geben.", tr: "“Hiç kuşkusuz Allah, fazladan iyilikte bulunanları bol bol mükâfatlandırır.”" },
@@ -140,7 +140,23 @@ function formatTime(sec) {
   return `${String(m).padStart(2, "0")}:${String(r).padStart(2, "0")}`;
 }
 
-/* ---- marking logic (same as before) ---- */
+function parseJsonTolerant(text, urlForMsg = "") {
+  const raw = String(text ?? "");
+  let s = raw.replace(/^\uFEFF/, "").trim();
+
+  if (s.startsWith("<!doctype") || s.startsWith("<html") || s.startsWith("<head") || s.startsWith("<")) {
+    throw new Error(`Expected JSON but got HTML | url=${urlForMsg} | head=${s.slice(0, 80)}`);
+  }
+
+  s = s.replace(/,\s*([}\]])/g, "$1");
+  return JSON.parse(s);
+}
+
+function stripOuterQuotes(s) {
+  const t = String(s ?? "").trim();
+  return t.replace(/^[\"“”]+/, "").replace(/[\"“”]+$/, "").trim();
+}
+
 function normalizeCommon(s) {
   return String(s ?? "")
     .replaceAll("\u00A0", " ")
@@ -148,11 +164,6 @@ function normalizeCommon(s) {
     .replace(/[‘’]/g, "'")
     .replace(/\s+/g, " ")
     .trim();
-}
-
-function stripOuterQuotes(s) {
-  const t = String(s ?? "").trim();
-  return t.replace(/^[\"“”]+/, "").replace(/[\"“”]+$/, "").trim();
 }
 
 function escapeRegexLiteral(s) {
@@ -365,18 +376,6 @@ function useMarkSegmentCached() {
   }, []);
 
   return { markSegment, clearCache: clear };
-}
-
-function parseJsonTolerant(text, urlForMsg = "") {
-  const raw = String(text ?? "");
-  let s = raw.replace(/^\uFEFF/, "").trim();
-
-  if (s.startsWith("<!doctype") || s.startsWith("<html") || s.startsWith("<head") || s.startsWith("<")) {
-    throw new Error(`Expected JSON but got HTML | url=${urlForMsg} | head=${s.slice(0, 80)}`);
-  }
-
-  s = s.replace(/,\s*([}\]])/g, "$1");
-  return JSON.parse(s);
 }
 
 /**
@@ -653,6 +652,7 @@ export default function App() {
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [duration, setDuration] = useState(0);
+
   const currentTimeRef = useRef(0);
   const [timeUi, setTimeUi] = useState(0);
 
@@ -665,13 +665,11 @@ export default function App() {
   const activeIndexRef = useRef(activeIndex);
   const durationRef = useRef(duration);
 
-  const [tick, setTick] = useState(0);
   const rafRef = useRef(0);
   const lastUiTsRef = useRef(0);
   const UI_FPS = 12;
 
   const dockRef = useRef(null);
-  const cardRef = useRef(null);
 
   const { markSegment, clearCache } = useMarkSegmentCached();
 
@@ -693,6 +691,19 @@ export default function App() {
     () => (selectedSurah ? resolvePublicUrl(selectedSurah.versesUrl) : ""),
     [selectedSurah]
   );
+
+  // Set CSS var for padding-bottom from dock height (no ResizeObserver loop)
+  useEffect(() => {
+    const updateDockH = () => {
+      const dock = dockRef.current;
+      if (!dock) return;
+      const h = Math.ceil(dock.getBoundingClientRect().height);
+      document.documentElement.style.setProperty("--dockH", `${h}px`);
+    };
+    updateDockH();
+    window.addEventListener("resize", updateDockH);
+    return () => window.removeEventListener("resize", updateDockH);
+  }, []);
 
   const seekTo = useCallback((t, autoPlay = false) => {
     const a = audioRef.current;
@@ -852,26 +863,25 @@ export default function App() {
     };
   }, [versesSrc, clearCache, seekVerse]);
 
-  // audio listeners
+  // audio listeners (throttled UI updates)
   useEffect(() => {
     const a = audioRef.current;
     if (!a) return;
 
-    const scheduleTick = () => {
+    const scheduleUi = () => {
       if (rafRef.current) return;
       rafRef.current = requestAnimationFrame((ts) => {
         rafRef.current = 0;
         const minDt = 1000 / UI_FPS;
         if (ts - (lastUiTsRef.current || 0) < minDt) return;
         lastUiTsRef.current = ts;
-        setTick((x) => x + 1);
         setTimeUi(a.currentTime || 0);
       });
     };
 
     const onTime = () => {
       currentTimeRef.current = a.currentTime || 0;
-      scheduleTick();
+      scheduleUi();
     };
 
     const onMeta = () => setDuration(a.duration || 0);
@@ -896,92 +906,65 @@ export default function App() {
     };
   }, []);
 
-  // repeat logic
+  // repeat logic tick (lightweight)
   useEffect(() => {
-    const a = audioRef.current;
-    if (!a) return;
-    if (!verses.length) return;
-    if (repeatMode <= 0) return;
+    if (!repeatMode) return;
+    const id = window.setInterval(() => {
+      const a = audioRef.current;
+      if (!a) return;
+      if (!versesRef.current.length) return;
 
-    let idx = activeIndexRef.current;
-    const t = currentTimeRef.current;
+      const versesNow = versesRef.current;
+      let idx = activeIndexRef.current;
+      const t = currentTimeRef.current;
 
-    if (idx < 0 || !verses[idx]) idx = 0;
+      if (idx < 0 || !versesNow[idx]) idx = 0;
 
-    const v = verses[idx];
-    const s = Number(v?.start);
-    const e = Number(v?.end);
-    if (!Number.isFinite(s) || !Number.isFinite(e) || e <= s) return;
+      const v = versesNow[idx];
+      const s = Number(v?.start);
+      const e = Number(v?.end);
+      if (!Number.isFinite(s) || !Number.isFinite(e) || e <= s) return;
 
-    const st = repeatStateRef.current;
+      const st = repeatStateRef.current;
 
-    if (st.idx !== idx) {
-      repeatStateRef.current = { idx, done: 0, armed: true, lastFire: 0 };
-      return;
-    }
+      if (st.idx !== idx) {
+        repeatStateRef.current = { idx, done: 0, armed: true, lastFire: 0 };
+        return;
+      }
 
-    if (t < e - 0.12) {
-      repeatStateRef.current.armed = true;
-      return;
-    }
+      if (t < e - 0.12) {
+        repeatStateRef.current.armed = true;
+        return;
+      }
 
-    const nearEnd = t >= e - 0.02;
-    if (!nearEnd || !repeatStateRef.current.armed) return;
+      const nearEnd = t >= e - 0.02;
+      if (!nearEnd || !repeatStateRef.current.armed) return;
 
-    const now = performance.now();
-    if (now - (repeatStateRef.current.lastFire || 0) < 350) return;
-    repeatStateRef.current.lastFire = now;
+      const now = performance.now();
+      if (now - (repeatStateRef.current.lastFire || 0) < 350) return;
+      repeatStateRef.current.lastFire = now;
 
-    repeatStateRef.current.armed = false;
+      repeatStateRef.current.armed = false;
 
-    const done = repeatStateRef.current.done || 0;
-    if (done < repeatMode) {
-      repeatStateRef.current.done = done + 1;
+      const done = repeatStateRef.current.done || 0;
+      if (done < repeatMode) {
+        repeatStateRef.current.done = done + 1;
+        a.currentTime = s;
+        currentTimeRef.current = s;
+        setTimeUi(s);
+        a.play().catch(() => {});
+        return;
+      }
+
+      repeatStateRef.current.done = 0;
+      a.pause();
       a.currentTime = s;
       currentTimeRef.current = s;
       setTimeUi(s);
-      a.play().catch(() => {});
-      return;
-    }
+    }, 90);
 
-    repeatStateRef.current.done = 0;
-    a.pause();
-    a.currentTime = s;
-    currentTimeRef.current = s;
-    setTimeUi(s);
-  }, [tick, verses, repeatMode]);
-
-  // scroll disable if verse fits (card + dock)
-  useEffect(() => {
-    const update = () => {
-      const dock = dockRef.current;
-      const card = cardRef.current;
-      if (!dock || !card) return;
-
-      const dockH = Math.ceil(dock.getBoundingClientRect().height);
-      document.documentElement.style.setProperty("--dockH", `${dockH}px`);
-
-      const available = window.innerHeight - dockH - 24;
-      const cardH = Math.ceil(card.getBoundingClientRect().height);
-
-      const fit = cardH <= available;
-      document.documentElement.classList.toggle("noScroll", fit);
-      document.body.classList.toggle("noScroll", fit);
-    };
-
-    update();
-    window.addEventListener("resize", update);
-    const ro = new ResizeObserver(() => update());
-    if (dockRef.current) ro.observe(dockRef.current);
-    if (cardRef.current) ro.observe(cardRef.current);
-
-    return () => {
-      window.removeEventListener("resize", update);
-      ro.disconnect();
-      document.documentElement.classList.remove("noScroll");
-      document.body.classList.remove("noScroll");
-    };
-  }, [activeIndex, selectedSurah, verses.length]);
+    return () => window.clearInterval(id);
+  }, [repeatMode]);
 
   const activeVerse = useMemo(() => (activeIndex >= 0 ? verses[activeIndex] : null), [activeIndex, verses]);
 
@@ -1009,25 +992,24 @@ export default function App() {
         {header}
         {error ? <div className="errorBox">{error}</div> : null}
 
-        <div ref={cardRef}>
-          <SinglePlayerMain verse={activeVerse} markSegment={markSegment} />
-        </div>
+        <SinglePlayerMain verse={activeVerse} markSegment={markSegment} />
       </main>
 
       {/* ✅ ONLY PLAYER: bottom fixed */}
       <div className="bottomDock" ref={dockRef} aria-label="Bottom Player">
         <audio ref={audioRef} src={audioSrc} preload="metadata" playsInline />
 
-        <div className="bottomDockTopRow">
-          <span className="dockPill">Sûre</span>
+        {/* ✅ SINGLE ROW: selector + buttons + wheel all aligned */}
+        <div className="dockRow">
           <select
-            className="dockSelect"
+            className="dockSelectBig"
             value={selectedSurah.slug}
             onChange={(e) => {
               const slug = e.target.value;
               const next = SURAHES.find((s) => s.slug === slug);
               if (next) setSelectedSurah(next);
             }}
+            aria-label="Sûre seç"
           >
             {SURAHES.map((s) => (
               <option key={s.slug} value={s.slug}>
@@ -1036,7 +1018,47 @@ export default function App() {
             ))}
           </select>
 
-          <span className="dockTime mono">
+          <button className="spBtn" type="button" onClick={prevAyah} aria-label="Prev">
+            ◀
+          </button>
+
+          <button className="spBtn spBtnPrimary" type="button" onClick={onPlayPause} aria-label="Play/Pause">
+            {isPlaying ? "⏸" : "▶"}
+          </button>
+
+          <button className="spBtn" type="button" onClick={nextAyah} aria-label="Next">
+            ▶
+          </button>
+
+          <div className="dockWheelWrap" aria-label="Wheel wrap">
+            <IOSPickerWheelVertical3D
+              disabled={!verses.length}
+              value={Number(activeVerse?.ayah || 0)}
+              onStep={(dir) => {
+                const cur = activeIndexRef.current >= 0 ? activeIndexRef.current : 0;
+                const next = clamp(cur + dir, 0, Math.max(0, verses.length - 1));
+                seekVerse(next, isPlaying);
+              }}
+            />
+          </div>
+
+          <button
+            className={`spRBtn ${repeatMode ? "on" : "off"}`}
+            type="button"
+            onClick={() => {
+              tactilePulse(10);
+              toggleRepeat();
+            }}
+            aria-label="Repeat"
+            title="Repeat (R)"
+          >
+            {repeatMode === 2 ? "rr" : "r"}
+          </button>
+        </div>
+
+        {/* ✅ BIGGER time text + seek */}
+        <div className="dockTimeRow mono">
+          <span className="dockTimeBig">
             {formatTime(currentTime)} / {formatTime(duration)}
           </span>
         </div>
@@ -1056,43 +1078,6 @@ export default function App() {
             }}
             aria-label="MP3 süre çubuğu"
           />
-        </div>
-
-        <div className="bottomDockControls">
-          <button className="spBtn" type="button" onClick={prevAyah} aria-label="Prev">
-            ◀
-          </button>
-
-          <button className="spBtn spBtnPrimary" type="button" onClick={onPlayPause} aria-label="Play/Pause">
-            {isPlaying ? "⏸" : "▶"}
-          </button>
-
-          <button className="spBtn" type="button" onClick={nextAyah} aria-label="Next">
-            ▶
-          </button>
-
-          <IOSPickerWheelVertical3D
-            disabled={!verses.length}
-            value={Number(activeVerse?.ayah || 0)}
-            onStep={(dir) => {
-              const cur = activeIndexRef.current >= 0 ? activeIndexRef.current : 0;
-              const next = clamp(cur + dir, 0, Math.max(0, verses.length - 1));
-              seekVerse(next, isPlaying);
-            }}
-          />
-
-          <button
-            className={`spRBtn ${repeatMode ? "on" : "off"}`}
-            type="button"
-            onClick={() => {
-              tactilePulse(10);
-              toggleRepeat();
-            }}
-            aria-label="Repeat"
-            title="Repeat (R)"
-          >
-            {repeatMode === 2 ? "rr" : "r"}
-          </button>
         </div>
       </div>
     </div>
