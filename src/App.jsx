@@ -965,7 +965,10 @@ const VersesTable = React.memo(function VersesTable({
 });
 
 export default function App() {
-  const selectedSurah = SURAHES[0];
+  // ✅ default: meryem varsa onu aç, yoksa ilk surah
+  const [selectedSurah, setSelectedSurah] = useState(
+    () => SURAHES.find((s) => s.slug === "meryem") ?? SURAHES[0]
+  );
 
   const [verses, setVerses] = useState([]);
   const [error, setError] = useState("");
@@ -979,7 +982,6 @@ export default function App() {
   const [activeIndex, setActiveIndex] = useState(-1);
   const [singleOn, setSingleOn] = useState(true);
 
-  // repeat: 0 off, 1 => 1 tekrar, 2 => 2 tekrar
   const [repeatMode, setRepeatMode] = useState(0);
   const repeatStateRef = useRef({ idx: -1, done: 0, armed: true, lastFire: 0 });
 
@@ -1015,6 +1017,421 @@ export default function App() {
     durationRef.current = duration;
     isPlayingRef.current = isPlaying;
   }, [verses, activeIndex, duration, isPlaying]);
+
+  useEffect(() => {
+    if (!singleOn) {
+      document.body.classList.remove("spOpen");
+      document.body.style.top = "";
+      return;
+    }
+
+    const y = window.scrollY || 0;
+    document.body.dataset.spScrollY = String(y);
+    document.body.style.top = `-${y}px`;
+    document.body.classList.add("spOpen");
+
+    return () => {
+      const saved = Number(document.body.dataset.spScrollY || 0);
+      document.body.classList.remove("spOpen");
+      document.body.style.top = "";
+      delete document.body.dataset.spScrollY;
+      window.scrollTo(0, saved);
+    };
+  }, [singleOn]);
+
+  const audioSrc = useMemo(
+    () => (selectedSurah ? resolvePublicUrl(selectedSurah.audioUrl) : ""),
+    [selectedSurah]
+  );
+  const versesSrc = useMemo(
+    () => (selectedSurah ? resolvePublicUrl(selectedSurah.versesUrl) : ""),
+    [selectedSurah]
+  );
+
+  const { starts, ends, monotonic } = useMemo(() => {
+    const s = [];
+    const e = [];
+    for (const v of verses) {
+      s.push(Number(v?.start));
+      e.push(Number(v?.end));
+    }
+    const ok =
+      s.length > 0 &&
+      s.every((x) => Number.isFinite(x)) &&
+      e.every((x) => Number.isFinite(x)) &&
+      isMonotonicNonDecreasing(s);
+    return { starts: s, ends: e, monotonic: ok };
+  }, [verses]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    setError("");
+    setVerses([]);
+    setActiveIndex(-1);
+
+    setRepeatMode(0);
+    repeatStateRef.current = { idx: -1, done: 0, armed: true, lastFire: 0 };
+
+    clearCache();
+
+    const a = audioRef.current;
+    if (a) {
+      a.pause();
+      a.currentTime = 0;
+    }
+    currentTimeRef.current = 0;
+
+    (async () => {
+      try {
+        const res = await fetch(versesSrc, { cache: "no-store" });
+        const text = await res.text();
+
+        if (!res.ok) {
+          throw new Error(
+            `Fetch failed: ${res.status} ${res.statusText} | url=${versesSrc} | body=${text.slice(
+              0,
+              160
+            )}`
+          );
+        }
+
+        const data = parseJsonTolerant(text, versesSrc);
+        if (!Array.isArray(data)) throw new Error("Invalid verses JSON (expected array)");
+
+        if (!cancelled) {
+          rowRefs.current = [];
+          setVerses(data);
+          setSingleOn(true);
+        }
+      } catch (e) {
+        console.error("[verses] load failed:", e);
+        if (!cancelled) setError(`Verses could not be loaded: ${e.message}`);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [versesSrc, clearCache]);
+
+  useEffect(() => {
+    const a = audioRef.current;
+    if (!a) return;
+
+    const scheduleTick = () => {
+      if (rafRef.current) return;
+      rafRef.current = requestAnimationFrame((ts) => {
+        rafRef.current = 0;
+        const minDt = 1000 / UI_FPS;
+        if (ts - (lastUiTsRef.current || 0) < minDt) return;
+        lastUiTsRef.current = ts;
+        setTick((x) => x + 1);
+      });
+    };
+
+    const onTime = () => {
+      currentTimeRef.current = a.currentTime || 0;
+      scheduleTick();
+    };
+
+    const onMeta = () => setDuration(a.duration || 0);
+    const onPlay = () => setIsPlaying(true);
+    const onPause = () => setIsPlaying(false);
+    const onErr = () => setError("Audio could not be played. Check console for details.");
+
+    a.addEventListener("timeupdate", onTime);
+    a.addEventListener("loadedmetadata", onMeta);
+    a.addEventListener("play", onPlay);
+    a.addEventListener("pause", onPause);
+    a.addEventListener("error", onErr);
+
+    return () => {
+      a.removeEventListener("timeupdate", onTime);
+      a.removeEventListener("loadedmetadata", onMeta);
+      a.removeEventListener("play", onPlay);
+      a.removeEventListener("pause", onPause);
+      a.removeEventListener("error", onErr);
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      rafRef.current = 0;
+    };
+  }, []);
+
+  const seekTo = useCallback((t, autoPlay = false) => {
+    const a = audioRef.current;
+    if (!a || !Number.isFinite(t)) return;
+
+    const d = Number.isFinite(a.duration) ? a.duration : durationRef.current;
+    const nextT = Number.isFinite(d) && d > 0 ? clamp(t, 0, d - 0.01) : Math.max(0, t);
+
+    a.currentTime = nextT;
+    currentTimeRef.current = nextT;
+
+    if (autoPlay) a.play().catch(() => {});
+  }, []);
+
+  const seekVerse = useCallback(
+    (idx, autoPlay = true) => {
+      const vs = versesRef.current;
+      const v = vs[idx];
+      if (!v) return;
+
+      const start = Number(v.start);
+      if (!Number.isFinite(start)) return;
+
+      repeatStateRef.current = { idx, done: 0, armed: true, lastFire: 0 };
+
+      seekTo(start, autoPlay);
+
+      setActiveIndex(idx);
+      activeIndexRef.current = idx;
+
+      requestAnimationFrame(() => {
+        const el = rowRefs.current[idx];
+        if (el) ensureRowVisible(el, 10);
+      });
+    },
+    [seekTo]
+  );
+
+  useEffect(() => {
+    if (!singleOn) return;
+    if (!verses.length) return;
+    if (activeIndexRef.current >= 0) return;
+    seekVerse(0, false);
+  }, [singleOn, verses.length, seekVerse]);
+
+  const onPlayPause = useCallback(() => {
+    const a = audioRef.current;
+    if (!a) return;
+    if (a.paused) a.play().catch(() => {});
+    else a.pause();
+  }, []);
+
+  const pause = useCallback(() => {
+    const a = audioRef.current;
+    if (!a) return;
+    a.pause();
+  }, []);
+
+  const prevAyah = useCallback(() => {
+    const vs = versesRef.current;
+    if (!vs.length) return;
+    const cur = activeIndexRef.current;
+    const idx = cur > 0 ? cur - 1 : 0;
+    seekVerse(idx, true);
+  }, [seekVerse]);
+
+  const nextAyah = useCallback(() => {
+    const vs = versesRef.current;
+    if (!vs.length) return;
+    const cur = activeIndexRef.current;
+    const idx = cur >= 0 ? Math.min(vs.length - 1, cur + 1) : 0;
+    seekVerse(idx, true);
+  }, [seekVerse]);
+
+  const toggleRepeat = useCallback(() => {
+    setRepeatMode((m) => {
+      const next = m === 0 ? 1 : m === 1 ? 2 : 0;
+
+      if (next <= 0) {
+        repeatStateRef.current = { idx: -1, done: 0, armed: true, lastFire: 0 };
+        return next;
+      }
+
+      const vs = versesRef.current;
+      if (!vs.length) return next;
+
+      let idx = activeIndexRef.current;
+      if (idx < 0 || !vs[idx]) idx = 0;
+
+      repeatStateRef.current = { idx, done: 0, armed: true, lastFire: 0 };
+
+      const v = vs[idx];
+      const s = Number(v?.start);
+      if (Number.isFinite(s)) seekTo(s, true);
+
+      return next;
+    });
+  }, [seekTo]);
+
+  useEffect(() => {
+    const a = audioRef.current;
+    if (!a) return;
+
+    if (verses.length) {
+      const t = currentTimeRef.current;
+      const idx = monotonic
+        ? findActiveVerseIndexBinary(starts, ends, t)
+        : findActiveVerseIndexLinearOverlapSafe(verses, t);
+
+      if (idx !== -1 && idx !== activeIndexRef.current) {
+        setActiveIndex(idx);
+        const el = rowRefs.current[idx];
+        if (el) ensureRowVisible(el, 10);
+      }
+    }
+
+    if (!verses.length) return;
+    if (repeatMode <= 0) return;
+
+    let idx = activeIndexRef.current;
+    const t = currentTimeRef.current;
+
+    if (idx < 0 || !verses[idx]) idx = 0;
+
+    const v = verses[idx];
+    const s = Number(v?.start);
+    const e = Number(v?.end);
+    if (!Number.isFinite(s) || !Number.isFinite(e) || e <= s) return;
+
+    const st = repeatStateRef.current;
+
+    if (st.idx !== idx) {
+      repeatStateRef.current = { idx, done: 0, armed: true, lastFire: 0 };
+      return;
+    }
+
+    if (t < e - 0.12) {
+      repeatStateRef.current.armed = true;
+      return;
+    }
+
+    const nearEnd = t >= e - 0.02;
+    if (!nearEnd || !repeatStateRef.current.armed) return;
+
+    const now = performance.now();
+    if (now - (repeatStateRef.current.lastFire || 0) < 350) return;
+    repeatStateRef.current.lastFire = now;
+
+    repeatStateRef.current.armed = false;
+
+    const done = repeatStateRef.current.done || 0;
+    if (done < repeatMode) {
+      repeatStateRef.current.done = done + 1;
+      a.currentTime = s;
+      currentTimeRef.current = s;
+      a.play().catch(() => {});
+      return;
+    }
+
+    repeatStateRef.current.done = 0;
+    a.pause();
+    a.currentTime = s;
+    currentTimeRef.current = s;
+  }, [tick, verses, monotonic, starts, ends, repeatMode]);
+
+  const activeVerse = useMemo(
+    () => (activeIndex >= 0 ? verses[activeIndex] : null),
+    [activeIndex, verses]
+  );
+
+  const dialDisabled = !verses.length;
+
+  // ✅ Header içine selector koyduk (buton değil)
+  const header = selectedSurah ? (
+    <div className="surahHeader">
+      <div className="surahHeaderLeft">
+        <h2 className="surahTitle">
+          #{selectedSurah.id} — {selectedSurah.nameTr}
+        </h2>
+        <div className="surahSub">{selectedSurah.nameDe}</div>
+      </div>
+
+      <div className="surahHeaderRight" dir="rtl">
+        {selectedSurah.nameAr}
+      </div>
+
+      <div className="surahBadges">
+        <span className="badge">Slug: {selectedSurah.slug}</span>
+        <span className="badge">Ayahs: {selectedSurah.ayahCount}</span>
+        <span className="badge">Loaded: {verses.length}</span>
+
+        <span className="badge">
+          Surah:&nbsp;
+          <select
+            value={selectedSurah.slug}
+            onChange={(e) => {
+              const slug = e.target.value;
+              const next = SURAHES.find((s) => s.slug === slug);
+              if (next) setSelectedSurah(next);
+            }}
+          >
+            {SURAHES.map((s) => (
+              <option key={s.slug} value={s.slug}>
+                {s.id} — {s.nameTr}
+              </option>
+            ))}
+          </select>
+        </span>
+      </div>
+    </div>
+  ) : null;
+
+  const onRowClick = useCallback(
+    (idx) => {
+      seekVerse(idx, true);
+    },
+    [seekVerse]
+  );
+
+  const setRowRef = useCallback((idx, el) => {
+    rowRefs.current[idx] = el;
+  }, []);
+
+  return (
+    <div className="appShell appShellSolo">
+      <main className="content">
+        {header}
+        {error ? <div className="errorBox">{error}</div> : null}
+
+        <SinglePlayerPanel
+          open={singleOn}
+          verse={activeVerse}
+          isPlaying={isPlaying}
+          onPlayPause={onPlayPause}
+          onPrev={prevAyah}
+          onNext={nextAyah}
+          onClose={() => {
+            setSingleOn(false);
+            pause();
+          }}
+          dialDisabled={dialDisabled}
+          onDialStep={(dir) => {
+            const vs = versesRef.current;
+            if (!vs.length) return;
+            const cur = activeIndexRef.current;
+            const base = cur >= 0 ? cur : 0;
+            const next = clamp(base + dir, 0, Math.max(0, vs.length - 1));
+            seekVerse(next, isPlayingRef.current);
+          }}
+          repeatMode={repeatMode}
+          onToggleRepeat={toggleRepeat}
+          markSegment={markSegment}
+        />
+
+        <div className="playerCard playerSticky">
+          <audio ref={audioRef} src={audioSrc} preload="metadata" />
+          <MinimalPlayerBar
+            isPlaying={isPlaying}
+            onPlayPause={onPlayPause}
+            onPrev={prevAyah}
+            onNext={nextAyah}
+            onOpenSingle={() => setSingleOn(true)}
+          />
+        </div>
+
+        <VersesTable
+          verses={verses}
+          activeIndex={activeIndex}
+          onRowClick={onRowClick}
+          setRowRef={setRowRef}
+          markSegment={markSegment}
+        />
+      </main>
+    </div>
+  );
+}
 
   // lock background scroll while single player open (scroll restore)
   useEffect(() => {
