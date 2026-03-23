@@ -22,8 +22,8 @@ const SURAHES = [
   nameTr: "Meryem",
   nameDe: "Maryam",
   ayahCount: 98,
-  audioUrl: "/audio/maryam.mp3",
-  versesUrl: "/data/maryam.json",
+  audioUrl: "/audio/meryem.mp3",
+  versesUrl: "/data/meryem.json",
 },
 ];
 
