@@ -537,3 +537,4 @@ body.spOpen{ overflow: hidden; }
   -webkit-backdrop-filter: none !important;
 }
 .isSafari .row:hover{ filter: none !important; }
+body { outline: 10px solid hotpink !important; }
