@@ -1,5 +1,5 @@
 /* =========================
-   FILE: src/styles.css (FULL - UPDATED: mobile FIT + DE visible)
+   FILE: src/styles.css (FULL - iOS Chrome/Firefox FIX + mobile fit)
    ========================= */
 
 :root{
@@ -23,7 +23,6 @@
 
 *{ box-sizing:border-box; }
 
-/* ✅ mobile text auto-scaling normalize */
 html{
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
@@ -40,7 +39,7 @@ html,body{
   font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial,"Noto Sans","Apple Color Emoji","Segoe UI Emoji";
 }
 
-/* ✅ single column (no sidebar) */
+/* ✅ single column */
 .appShell{ display:grid; grid-template-columns: 1fr; min-height:100vh; }
 .appShellSolo{ grid-template-columns: 1fr !important; }
 
@@ -59,8 +58,13 @@ html,body{
 .surahTitle{ margin:0; font-size:20px; }
 .surahSub{ color:var(--muted); margin-top:3px; }
 .surahHeaderRight{ font-size:18px; align-self:start; }
-.surahBadges{ grid-column:1 / -1; display:flex; gap:8px; flex-wrap:wrap; margin-top:6px; }
-
+.surahBadges{
+  grid-column:1 / -1;
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-top:6px;
+}
 .badge{
   font-size:12px;
   color:var(--muted);
@@ -70,7 +74,6 @@ html,body{
   border-radius:999px;
 }
 
-/* ✅ Surah selector in badge */
 .badge select{
   margin-left: 8px;
   background: rgba(0,0,0,0.25);
@@ -82,9 +85,7 @@ html,body{
   outline: none;
   max-width: 240px;
 }
-.badge select:focus{
-  border-color: rgba(255,255,255,0.18);
-}
+.badge select:focus{ border-color: rgba(255,255,255,0.18); }
 
 .errorBox{
   margin-top:12px;
@@ -112,7 +113,6 @@ html,body{
 }
 
 .playerControls{ display:grid; gap:10px; }
-
 .liveTimeBar{
   display:flex;
   align-items:center;
@@ -150,7 +150,6 @@ html,body{
 }
 .btnSmall:hover,.btnPrimary:hover{ border-color:rgba(255,255,255,0.16); }
 
-/* Single Player button */
 .btnSinglePlayer{
   padding: 14px 16px;
   border-radius: 14px;
@@ -168,7 +167,7 @@ html,body{
 .btnSinglePlayer:hover{ filter: brightness(1.06); }
 .btnSinglePlayer:active{ transform: translateY(2px); }
 
-/* Table */
+/* ===== TABLE (desktop) ===== */
 .tableWrap{
   margin-top:14px;
   border:1px solid var(--border);
@@ -233,7 +232,6 @@ html,body{
   font-family: "Noto Naskh Arabic","Amiri","Scheherazade New","Noto Sans Arabic", serif;
   white-space: normal;
 }
-
 .colDe, .colTr{
   font-size:14px;
   line-height:1.5;
@@ -241,54 +239,51 @@ html,body{
   white-space: normal;
 }
 
-/* ✅ MOBILE FIT (Chrome/Firefox/Android/iOS):
-   - header hidden
-   - each row becomes a “card”
-   - AR + DE + TR all visible (no hiding)
-*/
+/* ✅ Mobile width fallback (works on many devices) */
 @media (max-width:700px){
   .tableHeader{ display:none; }
   .tableHeader, .row{ min-width:0; }
 
-  .row{
-    display:block;
-    padding: 12px;
-  }
-
+  .row{ display:block; padding: 12px; }
   .cell{
     border-right:none;
     padding-right: 0;
     margin-top: 10px;
     display:block;
   }
-
-  .colNo{
-    font-size: 12px;
-    margin-bottom: 6px;
-    opacity: 0.8;
-  }
-
-  .colAr{
-    font-size: 20px;
-    line-height: 1.7;
-  }
-
-  .colDe, .colTr{
-    display:block;
-    font-size: 14px;
-    line-height: 1.6;
-  }
+  .colNo{ font-size: 12px; margin-bottom: 6px; opacity: 0.8; }
+  .colAr{ font-size: 20px; line-height: 1.7; }
+  .colDe, .colTr{ display:block; font-size: 14px; line-height: 1.6; }
 }
 
-/* -------- Single Player overlay -------- */
+/* ✅ iOS Chrome/Firefox: FORCE mobile card layout even if width lies */
+@media (hover:none) and (pointer:coarse){
+  .content{ padding: 12px; }
+
+  .tableHeader{ display:none; }
+  .tableHeader, .row{ min-width:0 !important; }
+
+  .row{ display:block !important; padding: 12px !important; }
+  .cell{
+    border-right:none !important;
+    padding-right: 0 !important;
+    margin-top: 10px !important;
+    display:block !important;
+  }
+  .colNo{ font-size: 12px !important; margin-bottom: 6px !important; opacity: 0.8 !important; }
+  .colAr{ font-size: 20px !important; line-height: 1.7 !important; }
+  .colDe, .colTr{ display:block !important; font-size: 14px !important; line-height: 1.6 !important; }
+
+  /* Top player bar buttons smaller on phones */
+  .btnPrimary{ padding: 10px 14px; font-size: 14px; }
+  .btnSmall{ padding: 8px 10px; }
+  .btnSinglePlayer{ padding: 12px 14px; font-size: 14px; }
+}
+
+/* ===== SINGLE PLAYER ===== */
 @keyframes spBackdropInertiaIn{
   0%   { opacity: 0; transform: translateY(10px); }
   100% { opacity: 1; transform: translateY(0px); }
-}
-@keyframes spBgFloat{
-  0%   { transform: translate3d(0,0,0) scale(1); }
-  50%  { transform: translate3d(10px,-8px,0) scale(1.02); }
-  100% { transform: translate3d(0,0,0) scale(1); }
 }
 
 .singlePlayerBackdrop{
@@ -304,38 +299,25 @@ html,body{
   animation: spBackdropInertiaIn 520ms cubic-bezier(0.16, 1, 0.3, 1) both;
   overflow: hidden;
 
-  /* ✅ allow pinch zoom on Chrome/Firefox mobile */
-  touch-action: pan-x pan-y pinch-zoom;
-}
-.singlePlayerBackdrop::before{
-  content:"";
-  position:absolute;
-  inset:-60px;
-  pointer-events:none;
-  opacity: 0.18;
-  background:
-    radial-gradient(900px 650px at 30% 25%, rgba(120,120,255,0.14), transparent 60%),
-    radial-gradient(900px 650px at 70% 45%, rgba(255,120,120,0.12), transparent 60%);
-  filter: blur(10px);
-  animation: spBgFloat 7.5s ease-in-out infinite;
-}
+  /* ✅ dynamic viewport for iOS Chrome/Firefox */
+  height: 100dvh;
+  min-height: 100svh;
 
-@media (prefers-reduced-motion: reduce){
-  .singlePlayerBackdrop{ animation: none; }
-  .singlePlayerBackdrop::before{ animation: none; }
+  touch-action: pan-x pan-y pinch-zoom;
 }
 
 .singlePlayerCard{
   width: min(1100px, 100%);
   max-width: calc(100vw - 28px);
+
+  /* ✅ reserve dock */
+  max-height: calc(100dvh - 220px);
+
   background: rgba(15,21,32,0.78);
   border: 1px solid rgba(255,255,255,0.12);
   border-radius: 20px;
   box-shadow: 0 30px 90px rgba(0,0,0,0.55);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
   padding: 14px;
-  max-height: 86vh;
   overflow: auto;
 }
 
@@ -353,23 +335,23 @@ html,body{
   unicode-bidi: isolate-override;
   text-align: right;
   font-family: "Noto Naskh Arabic","Amiri","Scheherazade New","Noto Sans Arabic", serif;
-  font-size: clamp(44px, 7.0vw, 78px);
+  font-size: clamp(40px, 5.6vw, 64px);
   line-height: 1.75;
   white-space: pre-wrap;
 }
 .singlePlayerLineDe,
 .singlePlayerLineTr{
-  font-size: clamp(26px, 4.0vw, 40px);
+  font-size: clamp(20px, 3.8vw, 32px);
   line-height: 1.55;
   color: rgba(255,255,255,0.86);
   white-space: pre-wrap;
 }
 
-/* ✅ mobile: reduce perceived “giant” text */
-@media (max-width:520px){
-  .singlePlayerLineAr{ font-size: clamp(34px, 7vw, 56px); }
+/* ✅ On phones (coarse): reduce “dev” text aggressively */
+@media (hover:none) and (pointer:coarse){
+  .singlePlayerLineAr{ font-size: clamp(30px, 6vw, 48px) !important; }
   .singlePlayerLineDe,
-  .singlePlayerLineTr{ font-size: clamp(18px, 4.6vw, 26px); }
+  .singlePlayerLineTr{ font-size: clamp(16px, 4.2vw, 22px) !important; }
 }
 
 /* Buttons */
@@ -393,7 +375,6 @@ html,body{
   justify-content:center;
   touch-action: manipulation;
 }
-.spBtn:active{ transform: translateY(2px); }
 .spBtnPrimary{
   min-width: 118px;
   height: 74px;
@@ -417,14 +398,10 @@ html,body{
     0 -10px 16px rgba(0,0,0,0.22) inset;
   position: relative;
   overflow: hidden;
-
-  /* ✅ do NOT block pinch zoom */
   touch-action: pan-y pinch-zoom;
-
   flex: 0 0 auto;
 }
 .spPicker3D.disabled{ opacity: 0.55; pointer-events:none; }
-
 .spPickerViewport{
   width: 100%;
   height: 100%;
@@ -433,7 +410,6 @@ html,body{
   place-items:center;
   perspective: 980px;
 }
-
 .spPickerItems3D{
   width: 100%;
   height: 100%;
@@ -441,7 +417,6 @@ html,body{
   place-items:center;
   transform-style: preserve-3d;
 }
-
 .spPickerItem3D{
   position:absolute;
   width: 100%;
@@ -458,47 +433,7 @@ html,body{
   color: rgba(255,255,255,0.96);
   text-shadow: 0 2px 14px rgba(0,0,0,0.38);
 }
-
-.spPickerShine{
-  position:absolute;
-  inset:-10px;
-  background:
-    radial-gradient(120px 220px at 30% 45%, rgba(255,255,255,0.10), transparent 60%),
-    radial-gradient(120px 220px at 70% 55%, rgba(99,179,237,0.10), transparent 60%);
-  pointer-events:none;
-  mix-blend-mode: screen;
-  opacity: 0.9;
-}
-
-.spPickerBar{
-  position:absolute;
-  left: 10px;
-  right: 10px;
-  top: 50%;
-  height: 46px;
-  transform: translateY(-50%);
-  border-radius: 999px;
-  background: rgba(255,255,255,0.10);
-  border: 1px solid rgba(255,255,255,0.14);
-  box-shadow:
-    0 0 0 1px rgba(0,0,0,0.18) inset,
-    0 10px 24px rgba(0,0,0,0.22);
-  pointer-events:none;
-}
-.spPickerFadeTop{
-  position:absolute;
-  left:0; right:0; top:0;
-  height: 46%;
-  background: linear-gradient(180deg, rgba(15,21,32,0.95), rgba(15,21,32,0.00));
-  pointer-events:none;
-}
-.spPickerFadeBottom{
-  position:absolute;
-  left:0; right:0; bottom:0;
-  height: 46%;
-  background: linear-gradient(0deg, rgba(15,21,32,0.95), rgba(15,21,32,0.00));
-  pointer-events:none;
-}
+.spPickerShine{ display:none; } /* perf */
 
 /* Repeat */
 .spRBtn{
@@ -526,24 +461,22 @@ html,body{
   background: linear-gradient(180deg, rgba(170,220,255,1), rgba(99,179,237,1));
   border-color: rgba(255,255,255,0.22);
 }
-.spRBtn:active{ transform: translateY(1px); }
 
-/* Bottom dock */
+/* Dock: ALWAYS span both sides on phones */
 .singlePlayerDockBottom{
   position: fixed !important;
+  left: 14px !important;
   right: 14px !important;
-  left: auto !important;
   bottom: calc(14px + env(safe-area-inset-bottom)) !important;
   top: auto !important;
   transform: none !important;
   z-index: 10001 !important;
-  width: min(640px, calc(100% - 28px)) !important;
+  width: auto !important;
   max-width: calc(100vw - 28px) !important;
   padding: 10px !important;
   border-radius: 18px !important;
   border: 1px solid rgba(255,255,255,0.12) !important;
   background: rgba(0,0,0,0.22) !important;
-
   overflow-x: auto !important;
   overflow-y: hidden !important;
   -webkit-overflow-scrolling: touch !important;
@@ -557,16 +490,35 @@ html,body{
   white-space: nowrap;
 }
 
+/* ✅ shrink dock controls on phones */
+@media (hover:none) and (pointer:coarse){
+  .singlePlayerDockBottom{ padding: 8px !important; }
+  .singlePlayerDockRow{ gap: 8px !important; }
+
+  .spBtn{
+    min-width: 54px !important;
+    height: 54px !important;
+    font-size: 22px !important;
+    border-radius: 16px !important;
+  }
+  .spBtnPrimary{
+    min-width: 100px !important;
+    height: 60px !important;
+    font-size: 26px !important;
+  }
+  .spPicker3D{
+    width: 102px !important;
+    height: 136px !important;
+  }
+  .spPickerItem3D{ font-size: 30px !important; }
+}
+
 /* Segment styles */
 .mark{
   display:inline;
   padding: 0.10em 0.34em;
   border-radius: 0.55em;
   margin: 0 0.06em;
-  box-shadow:
-    0 0 0 1px rgba(255,255,255,0.10) inset,
-    0 18px 50px rgba(0,0,0,0.18);
-  text-shadow: 0 2px 16px rgba(0,0,0,0.40);
   -webkit-box-decoration-break: clone;
   box-decoration-break: clone;
 }
@@ -575,133 +527,13 @@ html,body{
 .fontRed{ color: var(--markRed) !important; }
 .fontGreen{ color: var(--markGreen) !important; }
 
-/* ✅ Lock background scroll when single player open */
-body.spOpen{
-  overflow: hidden;
-}
+body.spOpen{ overflow: hidden; }
 
-/* PERF: Safari fallback */
+/* Safari fallback */
 .isSafari .playerSticky,
 .isSafari .singlePlayerBackdrop,
 .isSafari .singlePlayerCard{
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
 }
-.isSafari .singlePlayerBackdrop::before{
-  animation: none !important;
-  opacity: 0 !important;
-}
-.isSafari .row:hover{
-  filter: none !important;
-}
-/* =========================
-   FIX: iOS Safari + iOS Chrome/Firefox SAME layout
-   Put this at the END of styles.css
-   ========================= */
-
-/* 1) Backdrop: dynamic viewport safe */
-.singlePlayerBackdrop{
-  height: 100dvh;
-  min-height: 100svh;
-  width: 100vw;
-}
-
-/* 2) Card: reserve space for bottom dock */
-.singlePlayerCard{
-  max-height: calc(100dvh - 220px); /* dock + safe areas */
-  max-width: min(1100px, calc(100vw - 28px));
-}
-
-/* 3) Dock: don’t “float-right” on mobile; span both sides */
-.singlePlayerDockBottom{
-  left: 14px !important;
-  right: 14px !important;
-  width: auto !important;
-  max-width: calc(100vw - 28px) !important;
-}
-
-/* 4) Small screens: shrink controls a bit so it fits everywhere */
-@media (max-width:520px){
-  .singlePlayerDockBottom{ padding: 8px !important; }
-  .singlePlayerDockRow{ gap: 8px; }
-
-  .spBtn{
-    min-width: 56px;
-    height: 56px;
-    font-size: 22px;
-    border-radius: 16px;
-  }
-  .spBtnPrimary{
-    min-width: 104px;
-    height: 62px;
-    font-size: 26px;
-  }
-
-  .spPicker3D{
-    width: 104px;
-    height: 140px;
-  }
-  .spPickerItem3D{ font-size: 30px; }
-}
-
-/* 5) Very short height devices (landscape etc.) */
-@media (max-height:680px){
-  .singlePlayerCard{
-    max-height: calc(100dvh - 200px);
-  }
-}
-/* =========================
-   iOS Chrome/Firefox FIX (Safari ile aynı görünüm)
-   Bunu styles.css EN SONUNA ekle
-   ========================= */
-
-.singlePlayerBackdrop{
-  height: 100dvh;
-  min-height: 100svh;
-  width: 100vw;
-}
-
-/* Dock için yer bırak */
-.singlePlayerCard{
-  max-height: calc(100dvh - 220px);
-  max-width: min(1100px, calc(100vw - 28px));
-}
-
-/* Mobilde dock sağa değil, iki yana yaslansın */
-.singlePlayerDockBottom{
-  left: 14px !important;
-  right: 14px !important;
-  width: auto !important;
-  max-width: calc(100vw - 28px) !important;
-}
-
-/* Küçük ekranlarda kontroller biraz küçülsün */
-@media (max-width:520px){
-  .singlePlayerDockBottom{ padding: 8px !important; }
-  .singlePlayerDockRow{ gap: 8px; }
-
-  .spBtn{
-    min-width: 56px;
-    height: 56px;
-    font-size: 22px;
-    border-radius: 16px;
-  }
-  .spBtnPrimary{
-    min-width: 104px;
-    height: 62px;
-    font-size: 26px;
-  }
-
-  .spPicker3D{
-    width: 104px;
-    height: 140px;
-  }
-  .spPickerItem3D{ font-size: 30px; }
-}
-
-/* Çok basık ekran (landscape) */
-@media (max-height:680px){
-  .singlePlayerCard{
-    max-height: calc(100dvh - 200px);
-  }
-}
+.isSafari .row:hover{ filter: none !important; }
