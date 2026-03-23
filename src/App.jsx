@@ -27,6 +27,7 @@ const SURAHES = [
 },
 ];
 
+
 /**
  * SEGMENTS:
  * - ar: highlight + color
