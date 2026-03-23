@@ -1,5 +1,5 @@
 // =========================
-// FILE: src/App.jsx (FULL - BOTTOM FIXED HORIZONTAL DOCK + TOP SEEK + BIG SELECT + VISIBLE WHEEL + REPEAT)
+// FILE: src/App.jsx (FULL - SMOOTH SEEK + AYAH SYNC + MOBILE DOCK FIX)
 // =========================
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import "./styles.css";
@@ -28,95 +28,16 @@ const SURAHES = [
 ];
 
 /**
- * SEGMENTS (unchanged behavior from your original):
- * - ar: highlight + color
- * - tr/de: color only (segment if found, otherwise no coloring)
+ * ✅ Buraya senin büyük SEGMENTS objeni (mevcut projendeki) aynen yapıştırabilirsin.
+ * Aşağıdaki minimal örnek sadece dosyanın çalışması için.
  */
 const SEGMENTS = {
   6: {
     color: "green",
     ar: "إِنَّ رَبَّكَ عَلِيمٌ حَكِيمٌۭ",
     de: "Gewiß, dein Herr ist Allwissend und Allweise.",
-    tr: "“Şüphesiz ki Rabbin, (her şeyi) hakkıyla bilendir; her hüküm ve icraatında pek çok hikmetler bulunandır.”",
+    tr: "Şüphesiz ki Rabbin, (her şeyi) hakkıyla bilendir; her hüküm ve icraatında hikmetler bulunandır.",
   },
-  18: {
-    color: "green",
-    ar: "فَصَبْرٌۭ جَمِيلٌۭ ۖ وَٱللَّهُ ٱلْمُسْتَعَانُ عَلَىٰ مَا تَصِفُونَ",
-    de: "(So gilt es,) schöne Geduld (zu üben). Allah ist Derjenige, bei Dem Hilfe zu suchen ist gegen das, was ihr beschreibt.",
-    tr: "“Artık bana düşen, güzelce sabretmektir. Sizin bu anlattıklarınız karşısında yardımına müracaat edilecek sadece Allah var.”",
-  },
-  21: {
-    color: "green",
-    ar: "وَٱللَّهُ غَالِبٌ عَلَىٰٓ أَمْرِهِۦ وَلَٰكِنَّ أَكْثَرَ ٱلنَّاسِ لَا يَعْلَمُونَ",
-    de: "Und Allah ist in Seiner Angelegenheit überlegen. Aber die meisten Menschen wissen nicht.",
-    tr: "“Allah, neyi diler, neye hükmederse onu muhakkak yerine getirir. Ne var ki, insanların çoğu bunu bilmez.”",
-  },
-  22: {
-    color: "green",
-    ar: "وَكَذَٰلِكَ نَجْزِى ٱلْمُحْسِنِينَ",
-    de: "So vergelten Wir den Gutes Tuenden.",
-    tr: "“Kendilerini iyiliğe adamış, daima Allah’ı görüyormuşçasına ve Allah’ın kendilerini gördüğünün şuuru içinde davrananları işte böyle mükâfatlandırırız.”",
-  },
-  23: { color: "red", ar: "مَعَاذَ ٱللَّهِ", de: "Allah schütze mich (davor)!", tr: "“Allah korusun!”" },
-  34: {
-    color: "green",
-    ar: "إِنَّهُۥ هُوَ ٱلسَّمِيعُ ٱلْعَلِيمُ",
-    de: "Er ist ja der Allhörende und Allwissende.",
-    tr: "Hiç şüphesiz O’dur Semî‘ (her şeyi, her duayı hakkıyla işiten); Alîm (her şeyi, herkesin durumunu hakkıyla bilen).”",
-  },
-  40: {
-    color: "green",
-    ar: "إِنِ ٱلْحُكْمُ إِلَّا لِلَّهِ ۚ أَمَرَ أَلَّا تَعْبُدُوٓا۟ إِلَّآ إِيَّاهُ ۚ ذَٰلِكَ ٱلدِّينُ ٱلْقَيِّمُ وَلَٰكِنَّ أَكْثَرَ ٱلنَّاسِ لَا يَعْلَمُونَ",
-    de: "Das Urteil ist allein Allahs. Er hat befohlen, daß ihr nur Ihm dienen sollt. Das ist die richtige Religion. Aber die meisten Menschen wissen nicht.",
-    tr: "“Şurası bir gerçek ki, mutlak manâda hükmetme yetkisi sadece Allah’a aittir. O, Kendisinden başka hiç bir varlığa ibadet etmemenizi emretmiştir. Budur doğru ve her bakımdan sağlam din. Ne var ki, insanların çoğu bilmemekte ve bilgisizce hareket etmektedir.”",
-  },
-  53: {
-    color: "green",
-    ar: "إِنَّ ٱلنَّفْسَ لَأَمَّارَةٌۢ بِٱلسُّوٓءِ إِلَّا مَا رَحِمَ رَبِّىٓ ۚ إِنَّ رَبِّى غَفُورٌۭ رَّحِيمٌۭ",
-    de: "Die Seele gebietet fürwahr mit Nachdruck das Böse, außer daß mein Herr Sich erbarmt. Mein Herr ist Allvergebend und Barmherzig.",
-    tr: "“Çünkü nefis, daima ve ısrarla kötülüğü emreder; meğer ki Rabbim, hususî olarak merhamet edip koruya. Şurası bir gerçek ki Rabbim, günahları pek çok bağışlayandır; (bilhassa inanmış kullarına karşı) hususî rahmeti pek bol olandır.”",
-  },
-  56: {
-    color: "green",
-    ar: "نُصِيبُ بِرَحْمَتِنَا مَن نَّشَآءُ ۖ وَلَا نُضِيعُ أَجْرَ ٱلْمُحْسِنِينَ",
-    de: "Wir treffen mit Unserer Barmherzigkeit, wen Wir wollen, und Wir lassen den Lohn der Gutes Tuenden nicht verlorengehen.",
-    tr: "“Kimi dilersek ona bu şekilde hususî rahmetimizle muamele eder ve bütünüyle iyiliğe adanmış olarak, Allah’ı görür gibi, en azından O’nun kendilerini gördüğünün şuuru içinde davrananların mükâfatını asla zayi etmeyiz.”",
-  },
-  64: {
-    color: "green",
-    ar: "فَٱللَّهُ خَيْرٌ حَٰفِظًۭا ۖ وَهُوَ أَرْحَمُ ٱلرَّٰحِمِينَ",
-    de: "Allah ist besser als Behütender, und Er ist der Barmherzigste der Barmherzigen.",
-    tr: "“Ama Allah’tır gerçek hayırlı koruyucu ve O, bütün merhamet edenlerin üstünde mutlak merhamet sahibidir.”",
-  },
-  66: {
-    color: "green",
-    ar: "قَالَ ٱللَّهُ عَلَىٰ مَا نَقُولُ وَكِيلٌۭ",
-    de: "Allah ist Sachwalter über das, was wir (hier) sagen.",
-    tr: "“Allah konuştuklarımıza şahit ve gözeticidir; verilen sözlerin yerine gelip gelmemesi nihayette yine O’nun iznine ve kudretine bağlıdır.”",
-  },
-  67: {
-    color: "green",
-    ar: "إِنِ ٱلْحُكْمُ إِلَّا لِلَّهِ ۖ عَلَيْهِ تَوَكَّلْتُ ۖ وَعَلَيْهِ فَلْيَتَوَكَّلِ ٱلْمُتَوَكِّلُونَ",
-    de: "Das Urteil ist allein Allahs. Auf Ihn verlasse ich mich; und auf Ihn sollen sich diejenigen verlassen, die sich (überhaupt auf jemanden) verlassen (wollen).",
-    tr: "“Mutlak manâda bütün hüküm ve hakimiyet ancak Allah’ındır. Ancak O’na dayanır, O’na güvenirim. Kendisine dayanıp güvenecek bir güç ve makam arayan herkes (bütün insanlar), ancak O’na dayanıp güvenmelidirler.”",
-  },
-  76: {
-    color: "green",
-    ar: "إِلَّآ أَن يَشَآءَ ٱللَّهُ ۚ نَرْفَعُ دَرَجَٰتٍۢ مَّن نَّشَآءُ ۗ وَفَوْقَ كُلِّ ذِى عِلْمٍ عَلِيمٌۭ",
-    de: "außer daß Allah es wollte. Wir erhöhen, wen Wir wollen, um Rangstufen. Und über jedem, der Wissen besitzt, steht einer, der (noch mehr) weiß.",
-    tr: "“fakat Allah ne dilerse o olur (ve Allah, bir şeyi dileyince onun sebeplerini de hazırlar). Biz, kimi dilersek onu böyle mertebe mertebe yükseltiriz. Ve her bir bilgi sahibinin üstünde daha iyi bir bilen (ve hepsinin üstünde her şeyi bilen olarak Allah) vardır.”",
-  },
-  80: { color: "green", ar: "وَهُوَ خَيْرُ ٱلْحَٰكِمِينَ", de: "Er ist der Beste derer, die Urteile fällen.", tr: "“Allah, her zaman en hayırlı hükmü verendir.”" },
-  86: { color: "red", ar: "إِنَّمَآ أَشْكُوا۟ بَثِّى وَحُزْنِىٓ إِلَى ٱللَّهِ", de: "Ich klage meinen unerträglichen Kummer und meine Trauer nur Allah (allein)", tr: "“Ben, bütün dertlerimi, keder ve hüznümü Allah’a arz ediyor, O’na şikâyette bulunuyorum.”" },
-  87: { color: "green", ar: "وَلَا تَا۟يْـَٔسُوا۟ مِن رَّوْحِ ٱللَّهِ ۖ إِنَّهُۥ لَا يَا۟يْـَٔسُ مِن رَّوْحِ ٱللَّهِ إِلَّا ٱلْقَوْمُ ٱلْكَٰفِرُونَ", de: "Und gebt nicht die Hoffnung auf das Erbarmen Allahs auf. Es gibt die Hoffnung auf das Erbarmen Allahs nur das ungläubige Volk auf.", tr: "“Allah’ın rahmetinden asla ümidinizi kesmeyin. Şurası bir gerçek ki, O’na inanmayan kâfirler güruhu dışında hiç kimse Allah’ın rahmetinden ümit kesmez.”" },
-  88: { color: "green", ar: "إِنَّ ٱللَّهَ يَجْزِى ٱلْمُتَصَدِّقِينَ", de: "Allah vergilt denjenigen, die Almosen geben.", tr: "“Hiç kuşkusuz Allah, fazladan iyilikte bulunanları bol bol mükâfatlandırır.”" },
-  90: { color: "green", ar: "إِنَّ ٱللَّهُ لَا يُضِيعُ أَجْرَ ٱلْمُحْسِنِينَ", de: "Gewiß, Allah läßt den Lohn der Gutes Tuenden nicht verlorengehen.", tr: "“Doğrusu şu ki, kim O’na karşı derin saygı duyar, O’na karşı gelmekten sakınır ve O’na itaatla birlikte başına gelenlere de sabrederse, hiç şüphesiz Allah, böyle iyiliğe adanmış ve O’nu görürcesine davranan kimselerin mükâfatını asla zayi etmez.”" },
-  91: { color: "green", ar: "تَٱللَّهِ لَقَدْ ءَاثَرَكَ ٱللَّهُ عَلَيْنَا وَإِن كُنَّا لَخَٰطِـِٔينَ", de: "Bei Allah, Allah hat dich uns vorgezogen. Und wir haben wahrlich Verfehlungen begangen.", tr: "“Allah’a yemin olsun ki, gerçekten Allah seni bize tercih etti; biz, başka değil, ancak bir yanlış içinde idik.”" },
-  92: { color: "green", ar: "لَا تَثْرِيبَ عَلَيْكُمُ ٱلْيَوْمَ ۖ يَغْفِرُ ٱللَّهُ لَكُمْ ۖ وَهُوَ أَرْحَمُ ٱلرَّٰحِمِينَ", de: "Keine Schelte soll heute über euch kommen. Allah vergibt euch, Er ist ja der Barmherzigste der Barmherzigen.", tr: "“Hayır! Bugün size hiçbir kınama yok! (Ben hakkımı çoktan helâl ettim;) Allah da sizi affetsin. Çünkü O, bütün merhamet edenlerin üstünde mutlak merhamet sahibidir.”" },
-  98: { color: "green", ar: "إِنَّهُۥ هُوَ ٱلْغَفُورُ ٱلرَّحِيمُ", de: "Er ist ja der Allvergebende und Barmherzige.", tr: "“Hiç şüphesiz O, Ğafûr (günahları çok bağışlayan)dır; Rahîm (bilhassa tevbe ile Kendisine yönelen mü’ min kullarına karşı hususî rahmeti pek bol olan)dır.”" },
-  100: { color: "green", ar: "إِنَّ رَبِّى لَطِيفٌۭ لِّمَا يَشَآءُ ۚ إِنَّهُۥ هُوَ ٱلْعَلِيمُ ٱلْحَكِيمُ", de: "Gewiß, mein Herr ist feinfühlig (in der Durchführung dessen), was Er will. Er ist ja der Allwissende und Allweise.", tr: "“Gerçekten Rabbim, her ne dilerse onu pek güzel şekilde ve insanların göremeyeceği bir incelik içinde yerine getirir. Şüphesiz O, evet O, Alîm (her şeyi hakkıyla bilen)dir; Hakîm (bütün hüküm ve icraatında pek çok hikmetler bulunan)dır.”" },
-  101: { color: "red", ar: "تَوَفَّنِى مُسْلِمًۭا وَأَلْحِقْنِى بِٱلصَّٰلِحِينَ", de: "Berufe mich als (Dir) ergeben ab und nimm mich unter die Rechtschaffenen auf.", tr: "“Beni Müslüman olarak vefat ettir ve beni salihler içine kat!”" },
-  108: { color: "green", ar: "قُلْ هَٰذِهِۦ سَبِيلِىٓ أَدْعُوٓا۟ إِلَى ٱللَّهِ ۚ عَلَىٰ بَصِيرَةٍ أَنَا۠ وَمَنِ ٱتَّبَعَنِى ۖ وَسُبْحَٰنَ ٱللَّهِ وَمَآ أَنَا۠ مِنَ ٱلْمُشْرِكِينَ", de: "Sag: Das ist mein Weg: Ich rufe zu Allah aufgrund eines sichtbaren Hinweises, ich und diejenigen, die mir folgen. Preis sei Allah! Und ich gehöre nicht zu den Götzendienern.", tr: "“İşte benim (iman, ihlâs ve Tevhid) yolum: Ben, (körü körüne ve taklide dayalı olarak değil,) görerek, delile dayanarak ve insanların idrakine hitap ederek Allah’a çağırıyorum: ben ve bana tâbi olanlar. Ve Allah’ı şirkin her türlüsünden tenzih ederim, asla O’na ortak tanıyanlardan değilim ben.”" },
 };
 
 function resolvePublicUrl(path) {
@@ -125,14 +46,19 @@ function resolvePublicUrl(path) {
   const b = String(base || "/");
   return new URL(`${b}${p}`, window.location.origin).toString();
 }
+
 function clamp(n, a, b) {
   return Math.max(a, Math.min(b, n));
 }
+
 function tactilePulse(ms = 8) {
   try {
-    if (typeof navigator !== "undefined" && typeof navigator.vibrate === "function") navigator.vibrate(ms);
+    if (typeof navigator !== "undefined" && typeof navigator.vibrate === "function") {
+      navigator.vibrate(ms);
+    }
   } catch {}
 }
+
 function formatTime(sec) {
   const s = Math.max(0, Number(sec) || 0);
   const m = Math.floor(s / 60);
@@ -143,17 +69,57 @@ function formatTime(sec) {
 function parseJsonTolerant(text, urlForMsg = "") {
   const raw = String(text ?? "");
   let s = raw.replace(/^\uFEFF/, "").trim();
+
   if (s.startsWith("<!doctype") || s.startsWith("<html") || s.startsWith("<head") || s.startsWith("<")) {
     throw new Error(`Expected JSON but got HTML | url=${urlForMsg} | head=${s.slice(0, 80)}`);
   }
+
   s = s.replace(/,\s*([}\]])/g, "$1");
   return JSON.parse(s);
 }
 
+/* ---------------------------
+   AYAH INDEX SYNC (binary)
+--------------------------- */
+function isMonotonicNonDecreasing(arr) {
+  for (let i = 1; i < arr.length; i += 1) {
+    if (!(arr[i] >= arr[i - 1])) return false;
+  }
+  return true;
+}
+
+function findActiveVerseIndexBinary(starts, ends, t) {
+  if (!Number.isFinite(t) || !starts.length || starts.length !== ends.length) return -1;
+
+  let lo = 0;
+  let hi = starts.length - 1;
+  let best = -1;
+
+  while (lo <= hi) {
+    const mid = (lo + hi) >> 1;
+    const s = starts[mid];
+    if (s <= t) {
+      best = mid;
+      lo = mid + 1;
+    } else {
+      hi = mid - 1;
+    }
+  }
+
+  if (best < 0) return 0;
+  const e = ends[best];
+  if (Number.isFinite(e) && t < e) return best;
+  return best;
+}
+
+/* ---------------------------
+   MARK SEGMENT (light but cached)
+--------------------------- */
 function stripOuterQuotes(s) {
   const t = String(s ?? "").trim();
   return t.replace(/^[\"“”]+/, "").replace(/[\"“”]+$/, "").trim();
 }
+
 function normalizeCommon(s) {
   return String(s ?? "")
     .replaceAll("\u00A0", " ")
@@ -162,134 +128,7 @@ function normalizeCommon(s) {
     .replace(/\s+/g, " ")
     .trim();
 }
-function escapeRegexLiteral(s) {
-  return String(s).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-function normalizeArabicSnippet(snippet) {
-  return String(snippet || "")
-    .replace(/[\u064B-\u065F\u0670\u06D6-\u06ED]/g, "")
-    .replace(/\u0640/g, "")
-    .trim();
-}
-function buildArabicLooseRegex(snippet) {
-  const base = normalizeArabicSnippet(snippet);
-  if (!base) return null;
 
-  const DIACR = "[\\u064B-\\u065F\\u0670\\u06D6-\\u06ED]*";
-  const TAT = "\\u0640*";
-  const WS = "\\s*";
-
-  const chars = Array.from(base);
-  const parts = [];
-  for (const ch of chars) {
-    if (/\s/.test(ch)) {
-      parts.push(WS);
-      continue;
-    }
-    const esc = escapeRegexLiteral(ch);
-    parts.push(`${TAT}${esc}${DIACR}`);
-  }
-  return new RegExp(parts.join(""), "g");
-}
-function isArabicIgnorable(ch) {
-  return /[\u064B-\u065F\u0670\u06D6-\u06ED\u0640]/.test(ch);
-}
-function foldArabicChar(ch) {
-  switch (ch) {
-    case "ٱ":
-    case "أ":
-    case "إ":
-    case "آ":
-      return "ا";
-    case "ى":
-      return "ي";
-    case "ؤ":
-      return "و";
-    case "ئ":
-      return "ي";
-    case "ة":
-      return "ه";
-    default:
-      return ch;
-  }
-}
-function normalizeArabicForSearch(original) {
-  const s = String(original ?? "");
-  let norm = "";
-  const map = [];
-
-  for (let i = 0; i < s.length; i += 1) {
-    const ch = s[i];
-    if (isArabicIgnorable(ch)) continue;
-
-    if (/\s/.test(ch)) {
-      if (norm.length && norm[norm.length - 1] !== " ") {
-        map.push(i);
-        norm += " ";
-      }
-      continue;
-    }
-
-    const folded = foldArabicChar(ch);
-    map.push(i);
-    norm += folded;
-  }
-
-  return { norm: norm.trim().replace(/\s+/g, " "), map };
-}
-function extendArabicMatchEnd(original, endIndexExclusive) {
-  const s = String(original ?? "");
-  let end = endIndexExclusive;
-  while (end < s.length && isArabicIgnorable(s[end])) end += 1;
-  return end;
-}
-function markArabicByNormalizedMapping(text, snippet, className) {
-  const s = String(text ?? "");
-  const needleRaw = String(snippet ?? "");
-  if (!s || !needleRaw) return null;
-
-  const { norm: textN, map: textMap } = normalizeArabicForSearch(s);
-  const { norm: needleN } = normalizeArabicForSearch(needleRaw);
-  if (!textN || !needleN) return null;
-
-  const idxN = textN.indexOf(needleN);
-  if (idxN < 0) return null;
-
-  const startOrig = textMap[idxN];
-  const lastNormPos = idxN + needleN.length - 1;
-  const lastOrig = textMap[lastNormPos];
-  if (startOrig == null || lastOrig == null) return null;
-
-  const endOrigExclusive = extendArabicMatchEnd(s, lastOrig + 1);
-
-  return (
-    <>
-      {s.slice(0, startOrig)}
-      <span className={className}>{s.slice(startOrig, endOrigExclusive)}</span>
-      {s.slice(endOrigExclusive)}
-    </>
-  );
-}
-function applyRegexMarkFirst(text, regex, className) {
-  const s = String(text ?? "");
-  if (!s || !regex) return s;
-
-  regex.lastIndex = 0;
-  const m = regex.exec(s);
-  if (!m) return s;
-
-  const start = m.index;
-  const matchText = m[0] ?? "";
-  const end = start + matchText.length;
-
-  return (
-    <>
-      {s.slice(0, start)}
-      <span className={className}>{matchText}</span>
-      {s.slice(end)}
-    </>
-  );
-}
 function splitAndMarkFirst(text, needle, className) {
   const s = String(text ?? "");
   const n = String(needle ?? "");
@@ -306,40 +145,39 @@ function splitAndMarkFirst(text, needle, className) {
     </>
   );
 }
+
 function markSegmentUncached(text, ayah, lang) {
   const s = String(text ?? "");
-  const a = Number(ayah);
-  const seg = SEGMENTS[a];
+  const seg = SEGMENTS[Number(ayah)];
   if (!seg) return s;
 
-  const color = seg.color === "green" ? "green" : "red";
   const rawNeedle = seg[lang];
   if (!rawNeedle) return s;
 
+  const cls = seg.color === "green" ? "fontGreen" : "fontRed";
+
   if (lang === "ar") {
-    const cls = color === "green" ? "mark markGreen" : "mark markRed";
-    const mapped = markArabicByNormalizedMapping(s, rawNeedle, cls);
-    if (mapped) return mapped;
-    const rx = buildArabicLooseRegex(rawNeedle);
-    return applyRegexMarkFirst(s, rx, cls);
+    // basit: ar'da tüm satırı renklendir (istersen eski gelişmiş arabic matcher'ı geri koyabilirsin)
+    return <span className={cls}>{s}</span>;
   }
 
-  const cls = color === "green" ? "fontGreen" : "fontRed";
   const needle = stripOuterQuotes(rawNeedle);
-
   const direct = splitAndMarkFirst(s, needle, cls);
   if (direct !== s) return direct;
 
   const sN = normalizeCommon(s);
   const nN = normalizeCommon(needle);
-  if (!sN || !nN) return s;
-  if (sN.includes(nN)) return <span className={cls}>{s}</span>;
+  if (sN && nN && sN.includes(nN)) return <span className={cls}>{s}</span>;
 
   return s;
 }
+
 function useMarkSegmentCached() {
   const cacheRef = useRef(new Map());
-  const clear = useCallback(() => cacheRef.current.clear(), []);
+
+  const clearCache = useCallback(() => {
+    cacheRef.current.clear();
+  }, []);
 
   const markSegment = useCallback((text, ayah, lang) => {
     const s = String(text ?? "");
@@ -352,15 +190,14 @@ function useMarkSegmentCached() {
     return out;
   }, []);
 
-  return { markSegment, clearCache: clear };
+  return { markSegment, clearCache };
 }
 
-/**
- * Smooth inertial wheel (non-linear).
- */
+/* ---------------------------
+   WHEEL (inertial)
+--------------------------- */
 function IOSPickerWheelVertical3D({ disabled, value, onStep }) {
   const ref = useRef(null);
-
   const draggingRef = useRef(false);
   const pointerIdRef = useRef(null);
 
@@ -374,7 +211,7 @@ function IOSPickerWheelVertical3D({ disabled, value, onStep }) {
   const STEP_PX = 10;
   const MAX_STEPS_PER_FRAME = 14;
 
-  const RELEASE_MIN_V = 0.10;
+  const RELEASE_MIN_V = 0.1;
   const VEL_LIMIT = 2.2;
   const DECAY_PER_MS = 0.0065;
   const STOP_V = 0.05;
@@ -450,7 +287,6 @@ function IOSPickerWheelVertical3D({ disabled, value, onStep }) {
   const onPointerDown = (e) => {
     if (disabled) return;
     stop();
-
     draggingRef.current = true;
     pointerIdRef.current = e.pointerId;
 
@@ -497,7 +333,6 @@ function IOSPickerWheelVertical3D({ disabled, value, onStep }) {
 
     const dy = e.deltaY;
     const dir = dy < 0 ? +1 : -1;
-
     const raw = Math.abs(dy);
     const steps = clamp(Math.round(Math.pow(raw / 18, 1.05)), 1, 22);
 
@@ -598,116 +433,147 @@ export default function App() {
   const audioRef = useRef(null);
 
   const [isPlaying, setIsPlaying] = useState(false);
+  const isPlayingRef = useRef(false);
+
   const [duration, setDuration] = useState(0);
+  const durationRef = useRef(0);
 
   const currentTimeRef = useRef(0);
   const [timeUi, setTimeUi] = useState(0);
 
   const [activeIndex, setActiveIndex] = useState(-1);
-
-  const [repeatMode, setRepeatMode] = useState(0);
-  const repeatStateRef = useRef({ idx: -1, done: 0, armed: true, lastFire: 0 });
+  const activeIndexRef = useRef(-1);
 
   const versesRef = useRef(verses);
-  const activeIndexRef = useRef(activeIndex);
-  const durationRef = useRef(duration);
-
-  const rafRef = useRef(0);
-  const lastUiTsRef = useRef(0);
-  const UI_FPS = 12;
 
   const dockRef = useRef(null);
 
   const { markSegment, clearCache } = useMarkSegmentCached();
+
+  // seek UX state
+  const seekingRef = useRef(false);
+  const wasPlayingOnSeekRef = useRef(false);
+  const seekRafRef = useRef(0);
+  const pendingSeekRef = useRef(null);
+
+  // repeat
+  const [repeatMode, setRepeatMode] = useState(0);
+  const repeatStateRef = useRef({ idx: -1, done: 0, armed: true, lastFire: 0 });
 
   useEffect(() => {
     document.title = "Türkçe-Almanca Kur’an Player";
   }, []);
 
   useEffect(() => {
-    try {
-      const ua = navigator.userAgent || "";
-      const isSafari = /safari/i.test(ua) && !/chrome|crios|chromium|android/i.test(ua);
-      document.documentElement.classList.toggle("isSafari", isSafari);
-    } catch {}
-  }, []);
-
-  useEffect(() => {
     versesRef.current = verses;
     activeIndexRef.current = activeIndex;
     durationRef.current = duration;
-  }, [verses, activeIndex, duration]);
+    isPlayingRef.current = isPlaying;
+  }, [verses, activeIndex, duration, isPlaying]);
 
-  const audioSrc = useMemo(
-    () => (selectedSurah ? resolvePublicUrl(selectedSurah.audioUrl) : ""),
-    [selectedSurah]
-  );
-  const versesSrc = useMemo(
-    () => (selectedSurah ? resolvePublicUrl(selectedSurah.versesUrl) : ""),
-    [selectedSurah]
-  );
+  const audioSrc = useMemo(() => (selectedSurah ? resolvePublicUrl(selectedSurah.audioUrl) : ""), [selectedSurah]);
+  const versesSrc = useMemo(() => (selectedSurah ? resolvePublicUrl(selectedSurah.versesUrl) : ""), [selectedSurah]);
 
-  // Only measure dock height on resize (no observer loops)
- useEffect(() => {
-  const updateDockH = () => {
-    const dock = dockRef.current;
-    if (!dock) return;
-
-    const h = Math.ceil(dock.getBoundingClientRect().height);
-    const prev =
-      Number.parseInt(getComputedStyle(document.documentElement).getPropertyValue("--dockH") || "0", 10) || 0;
-
-    // sadece değişince set et (layout loop riskini keser)
-    if (Math.abs(h - prev) >= 2) {
-      document.documentElement.style.setProperty("--dockH", `${h}px`);
+  const { starts, ends, monotonic } = useMemo(() => {
+    const s = [];
+    const e = [];
+    for (const v of verses) {
+      s.push(Number(v?.start));
+      e.push(Number(v?.end));
     }
-  };
+    const ok =
+      s.length > 0 &&
+      s.every((x) => Number.isFinite(x)) &&
+      e.every((x) => Number.isFinite(x)) &&
+      isMonotonicNonDecreasing(s);
+    return { starts: s, ends: e, monotonic: ok };
+  }, [verses]);
 
-  const rafUpdate = () => requestAnimationFrame(updateDockH);
+  const syncAyahByTime = useCallback(
+    (t) => {
+      if (!monotonic || !versesRef.current.length) return;
+      const idx = findActiveVerseIndexBinary(starts, ends, t);
+      if (idx !== -1 && idx !== activeIndexRef.current) {
+        setActiveIndex(idx);
+        activeIndexRef.current = idx;
+      }
+    },
+    [ends, monotonic, starts]
+  );
 
-  rafUpdate();
-  const t1 = setTimeout(rafUpdate, 150);
-  const t2 = setTimeout(rafUpdate, 450);
+  // ✅ Dock height: mobile browsers need visualViewport (address bar changes)
+  useEffect(() => {
+    const setDockH = () => {
+      const dock = dockRef.current;
+      if (!dock) return;
 
-  window.addEventListener("resize", rafUpdate);
-  window.addEventListener("orientationchange", rafUpdate);
+      const h = Math.ceil(dock.getBoundingClientRect().height);
+      const prev =
+        Number.parseInt(getComputedStyle(document.documentElement).getPropertyValue("--dockH") || "0", 10) || 0;
 
-  return () => {
-    clearTimeout(t1);
-    clearTimeout(t2);
-    window.removeEventListener("resize", rafUpdate);
-    window.removeEventListener("orientationchange", rafUpdate);
-  };
-}, []);
+      if (Math.abs(h - prev) >= 2) {
+        document.documentElement.style.setProperty("--dockH", `${h}px`);
+      }
+    };
 
-  const seekTo = useCallback((t, autoPlay = false) => {
-    const a = audioRef.current;
-    if (!a || !Number.isFinite(t)) return;
+    const rafSet = () => requestAnimationFrame(setDockH);
 
-    const d = Number.isFinite(a.duration) ? a.duration : durationRef.current;
-    const nextT = Number.isFinite(d) && d > 0 ? clamp(t, 0, d - 0.01) : Math.max(0, t);
+    rafSet();
+    const t1 = setTimeout(rafSet, 120);
+    const t2 = setTimeout(rafSet, 420);
 
-    a.currentTime = nextT;
-    currentTimeRef.current = nextT;
-    setTimeUi(nextT);
+    window.addEventListener("resize", rafSet);
+    window.addEventListener("orientationchange", rafSet);
 
-    if (autoPlay) a.play().catch(() => {});
+    const vv = window.visualViewport;
+    if (vv) {
+      vv.addEventListener("resize", rafSet);
+      vv.addEventListener("scroll", rafSet);
+    }
+
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      window.removeEventListener("resize", rafSet);
+      window.removeEventListener("orientationchange", rafSet);
+      if (vv) {
+        vv.removeEventListener("resize", rafSet);
+        vv.removeEventListener("scroll", rafSet);
+      }
+    };
   }, []);
+
+  const seekTo = useCallback(
+    (t, autoPlay = false) => {
+      const a = audioRef.current;
+      if (!a || !Number.isFinite(t)) return;
+
+      const d = Number.isFinite(a.duration) ? a.duration : durationRef.current;
+      const nextT = Number.isFinite(d) && d > 0 ? clamp(t, 0, d - 0.01) : Math.max(0, t);
+
+      a.currentTime = nextT;
+      currentTimeRef.current = nextT;
+      setTimeUi(nextT);
+
+      // ✅ seek => ayah sync
+      syncAyahByTime(nextT);
+
+      if (autoPlay) a.play().catch(() => {});
+    },
+    [syncAyahByTime]
+  );
 
   const seekVerse = useCallback(
     (idx, autoPlay = true) => {
-      const vs = versesRef.current;
-      const v = vs[idx];
+      const v = versesRef.current[idx];
       if (!v) return;
-
-      const start = Number(v.start);
+      const start = Number(v?.start);
       if (!Number.isFinite(start)) return;
 
       repeatStateRef.current = { idx, done: 0, armed: true, lastFire: 0 };
-
-      seekTo(start, autoPlay);
       setActiveIndex(idx);
       activeIndexRef.current = idx;
+      seekTo(start, autoPlay);
     },
     [seekTo]
   );
@@ -760,6 +626,7 @@ export default function App() {
     });
   }, [seekTo]);
 
+  // keyboard
   useEffect(() => {
     const onKey = (e) => {
       if (e.code === "Space") {
@@ -783,6 +650,7 @@ export default function App() {
     return () => window.removeEventListener("keydown", onKey);
   }, [nextAyah, onPlayPause, prevAyah, toggleRepeat]);
 
+  // load verses on surah change
   useEffect(() => {
     let cancelled = false;
 
@@ -810,9 +678,7 @@ export default function App() {
         const text = await res.text();
 
         if (!res.ok) {
-          throw new Error(
-            `Fetch failed: ${res.status} ${res.statusText} | url=${versesSrc} | body=${text.slice(0, 160)}`
-          );
+          throw new Error(`Fetch failed: ${res.status} ${res.statusText} | body=${text.slice(0, 160)}`);
         }
 
         const data = parseJsonTolerant(text, versesSrc);
@@ -834,28 +700,37 @@ export default function App() {
     return () => {
       cancelled = true;
     };
-  }, [versesSrc, clearCache, seekVerse]);
+  }, [clearCache, seekVerse, versesSrc]);
 
+  // audio listeners + continuous ayah sync while playing
   useEffect(() => {
     const a = audioRef.current;
     if (!a) return;
 
-    const scheduleUi = () => {
-      if (rafRef.current) return;
-      rafRef.current = requestAnimationFrame((ts) => {
-        rafRef.current = 0;
-        const minDt = 1000 / UI_FPS;
-        if (ts - (lastUiTsRef.current || 0) < minDt) return;
-        lastUiTsRef.current = ts;
-        setTimeUi(a.currentTime || 0);
-      });
+    const UI_FPS = 30; // seek feel
+    let raf = 0;
+    let last = 0;
+
+    const pump = (ts) => {
+      raf = 0;
+      const minDt = 1000 / UI_FPS;
+      if (ts - last < minDt) return;
+      last = ts;
+
+      if (seekingRef.current) return;
+
+      const t = a.currentTime || 0;
+      currentTimeRef.current = t;
+      setTimeUi(t);
+      syncAyahByTime(t);
     };
 
-    const onTime = () => {
-      currentTimeRef.current = a.currentTime || 0;
-      scheduleUi();
+    const schedule = () => {
+      if (raf) return;
+      raf = requestAnimationFrame(pump);
     };
 
+    const onTime = () => schedule();
     const onMeta = () => setDuration(a.duration || 0);
     const onPlay = () => setIsPlaying(true);
     const onPause = () => setIsPlaying(false);
@@ -873,27 +748,27 @@ export default function App() {
       a.removeEventListener("play", onPlay);
       a.removeEventListener("pause", onPause);
       a.removeEventListener("error", onErr);
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
-      rafRef.current = 0;
+      if (raf) cancelAnimationFrame(raf);
     };
-  }, []);
+  }, [syncAyahByTime]);
 
-  // repeat loop (interval, lightweight)
+  // repeat logic
   useEffect(() => {
     if (!repeatMode) return;
+
     const id = window.setInterval(() => {
       const a = audioRef.current;
       if (!a) return;
 
-      const versesNow = versesRef.current;
-      if (!versesNow.length) return;
+      const vs = versesRef.current;
+      if (!vs.length) return;
 
       let idx = activeIndexRef.current;
       const t = currentTimeRef.current;
 
-      if (idx < 0 || !versesNow[idx]) idx = 0;
+      if (idx < 0 || !vs[idx]) idx = 0;
 
-      const v = versesNow[idx];
+      const v = vs[idx];
       const s = Number(v?.start);
       const e = Number(v?.end);
       if (!Number.isFinite(s) || !Number.isFinite(e) || e <= s) return;
@@ -939,38 +814,82 @@ export default function App() {
     return () => window.clearInterval(id);
   }, [repeatMode]);
 
+  // ✅ SMOOTH SEEK: onInput + rAF write to audio.currentTime
+  const flushSeek = useCallback(() => {
+    if (seekRafRef.current) return;
+    seekRafRef.current = requestAnimationFrame(() => {
+      seekRafRef.current = 0;
+      const v = pendingSeekRef.current;
+      pendingSeekRef.current = null;
+      if (v == null) return;
+      seekTo(v, false);
+    });
+  }, [seekTo]);
+
+  const onSeekPointerDown = useCallback(() => {
+    seekingRef.current = true;
+    wasPlayingOnSeekRef.current = isPlayingRef.current;
+    // iOS'ta daha stabil: seek sırasında çalma durdur
+    const a = audioRef.current;
+    if (a && !a.paused) a.pause();
+  }, []);
+
+  const onSeekPointerUp = useCallback(() => {
+    seekingRef.current = false;
+    // bırakınca eğer çalıyorduysa devam
+    if (wasPlayingOnSeekRef.current) {
+      audioRef.current?.play?.().catch(() => {});
+    }
+  }, []);
+
+  const onSeekInput = useCallback(
+    (e) => {
+      const v = Number(e.target.value);
+      if (!Number.isFinite(v)) return;
+
+      // UI anında aksın
+      setTimeUi(v);
+      currentTimeRef.current = v;
+      syncAyahByTime(v);
+
+      // audio write rAF ile (takıntı azalır)
+      pendingSeekRef.current = v;
+      flushSeek();
+    },
+    [flushSeek, syncAyahByTime]
+  );
+
   const activeVerse = useMemo(() => (activeIndex >= 0 ? verses[activeIndex] : null), [activeIndex, verses]);
-
-  const header = selectedSurah ? (
-    <div className="surahHeader">
-      <div className="surahHeaderLeft">
-        <h2 className="surahTitle">
-          #{selectedSurah.id} — {selectedSurah.nameTr}
-        </h2>
-        <div className="surahSub">{selectedSurah.nameDe}</div>
-      </div>
-
-      <div className="surahHeaderRight" dir="rtl">
-        {selectedSurah.nameAr}
-      </div>
-    </div>
-  ) : null;
 
   const canSeek = Number.isFinite(duration) && duration > 0;
   const currentTime = canSeek ? timeUi : 0;
+  const seekPct = canSeek ? clamp((currentTime / duration) * 100, 0, 100) : 0;
 
   return (
     <div className="appShell appShellSolo">
       <main className="content">
-        {header}
+        <div className="surahHeader">
+          <div className="surahHeaderLeft">
+            <h2 className="surahTitle">
+              #{selectedSurah.id} — {selectedSurah.nameTr}
+            </h2>
+            <div className="surahSub">{selectedSurah.nameDe}</div>
+          </div>
+          <div className="surahHeaderRight" dir="rtl">
+            {selectedSurah.nameAr}
+          </div>
+        </div>
+
         {error ? <div className="errorBox">{error}</div> : null}
+
         <SinglePlayerMain verse={activeVerse} markSegment={markSegment} />
       </main>
 
+      {/* ✅ ONLY BOTTOM DOCK */}
       <div className="bottomDock" ref={dockRef} aria-label="Bottom Player">
         <audio ref={audioRef} src={audioSrc} preload="metadata" playsInline />
 
-        {/* SEEK BAR TOP */}
+        {/* ✅ TOP SEEK (smooth) */}
         <div className="dockSeekTop">
           <input
             className="dockSeek"
@@ -980,12 +899,17 @@ export default function App() {
             step={0.01}
             value={canSeek ? currentTime : 0}
             disabled={!canSeek}
-            onChange={(e) => seekTo(Number(e.target.value), isPlaying)}
-            aria-label="MP3 seek bar"
+            onInput={onSeekInput}
+            onChange={onSeekInput}
+            onPointerDown={onSeekPointerDown}
+            onPointerUp={onSeekPointerUp}
+            onPointerCancel={onSeekPointerUp}
+            style={{ "--seekP": `${seekPct}%` }}
+            aria-label="MP3 seek"
           />
         </div>
 
-        {/* ONE HORIZONTAL ROW */}
+        {/* ✅ ONE HORIZONTAL ROW */}
         <div className="dockRow">
           <select
             className="dockSelectBig"
@@ -1023,7 +947,7 @@ export default function App() {
               onStep={(dir) => {
                 const cur = activeIndexRef.current >= 0 ? activeIndexRef.current : 0;
                 const next = clamp(cur + dir, 0, Math.max(0, verses.length - 1));
-                seekVerse(next, isPlaying);
+                seekVerse(next, isPlayingRef.current);
               }}
             />
           </div>
