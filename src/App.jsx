@@ -510,11 +510,17 @@ function MinimalPlayerBar({ isPlaying, onPlayPause, onPrev, onNext, onOpenSingle
  * - drag acceleration
  * - short inertia (stops quickly)
  * - no inertia if released slowly
+ *
+ * Hardening:
+ * - pointerId tracking + releasePointerCapture
+ * - touch-action none to prevent iOS scroll while dialing
  */
 function IOSPickerWheelVertical3D({ disabled, value, onStep }) {
   const ref = useRef(null);
 
   const draggingRef = useRef(false);
+  const pointerIdRef = useRef(null);
+
   const lastYRef = useRef(0);
   const lastTsRef = useRef(0);
 
@@ -612,17 +618,31 @@ function IOSPickerWheelVertical3D({ disabled, value, onStep }) {
     rafRef.current = requestAnimationFrame(frame);
   };
 
+  const releaseCapture = (node, pointerId) => {
+    try {
+      if (node && pointerId != null && typeof node.releasePointerCapture === "function") {
+        node.releasePointerCapture(pointerId);
+      }
+    } catch {}
+  };
+
   const onPointerDown = (e) => {
     if (disabled) return;
     stop();
     draggingRef.current = true;
+    pointerIdRef.current = e.pointerId;
+
     lastYRef.current = e.clientY;
     lastTsRef.current = performance.now();
-    ref.current?.setPointerCapture?.(e.pointerId);
+
+    try {
+      ref.current?.setPointerCapture?.(e.pointerId);
+    } catch {}
   };
 
   const onPointerMove = (e) => {
     if (disabled || !draggingRef.current) return;
+    if (pointerIdRef.current != null && e.pointerId !== pointerIdRef.current) return;
 
     const now = performance.now();
     const dy = e.clientY - lastYRef.current;
@@ -632,7 +652,6 @@ function IOSPickerWheelVertical3D({ disabled, value, onStep }) {
     lastTsRef.current = now;
 
     const v = dy / dt;
-
     velRef.current = velRef.current * 0.65 + v * 0.35;
 
     const speed = Math.abs(velRef.current);
@@ -642,8 +661,10 @@ function IOSPickerWheelVertical3D({ disabled, value, onStep }) {
     tickSteps();
   };
 
-  const onPointerUp = () => {
+  const onPointerUp = (e) => {
     draggingRef.current = false;
+    releaseCapture(ref.current, pointerIdRef.current);
+    pointerIdRef.current = null;
 
     if (!Number.isFinite(velRef.current) || Math.abs(velRef.current) < RELEASE_MIN_V) {
       stop();
@@ -654,7 +675,11 @@ function IOSPickerWheelVertical3D({ disabled, value, onStep }) {
 
   const onWheel = (e) => {
     if (disabled) return;
+
+    // Some browsers can still scroll parents; this reduces “leak-through”.
     e.preventDefault();
+    e.stopPropagation();
+
     stop();
 
     const dy = e.deltaY;
@@ -689,10 +714,14 @@ function IOSPickerWheelVertical3D({ disabled, value, onStep }) {
         role="slider"
         aria-label="Ayet çarkı"
         tabIndex={disabled ? -1 : 0}
+        style={{ touchAction: "none" }}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
+        onPointerLeave={(e) => {
+          if (draggingRef.current) onPointerUp(e);
+        }}
         onWheel={onWheel}
       >
         <div className="spPickerItems3D">
@@ -1028,6 +1057,7 @@ export default function App() {
           setSingleOn(true);
         }
       } catch (e) {
+        // eslint-disable-next-line no-console
         console.error("[verses] load failed:", e);
         if (!cancelled) setError(`Verses could not be loaded: ${e.message}`);
       }
@@ -1325,7 +1355,7 @@ export default function App() {
         />
 
         <div className="playerCard playerSticky">
-          <audio ref={audioRef} src={audioSrc} preload="metadata" />
+          <audio ref={audioRef} src={audioSrc} preload="metadata" playsInline />
           <MinimalPlayerBar
             isPlaying={isPlaying}
             onPlayPause={onPlayPause}
