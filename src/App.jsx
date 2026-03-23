@@ -1,5 +1,5 @@
 // =========================
-// FILE: src/App.jsx (FULL - ONLY BOTTOM FIXED PLAYER + SURAH SELECT LEFT + BIG UI + VISIBLE WHEEL + REPEAT + TIME)
+// FILE: src/App.jsx (FULL - BOTTOM FIXED HORIZONTAL DOCK + TOP SEEK + BIG SELECT + VISIBLE WHEEL + REPEAT)
 // =========================
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import "./styles.css";
@@ -27,6 +27,11 @@ const SURAHES = [
   },
 ];
 
+/**
+ * SEGMENTS (unchanged behavior from your original):
+ * - ar: highlight + color
+ * - tr/de: color only (segment if found, otherwise no coloring)
+ */
 const SEGMENTS = {
   6: {
     color: "green",
@@ -120,19 +125,14 @@ function resolvePublicUrl(path) {
   const b = String(base || "/");
   return new URL(`${b}${p}`, window.location.origin).toString();
 }
-
 function clamp(n, a, b) {
   return Math.max(a, Math.min(b, n));
 }
-
 function tactilePulse(ms = 8) {
   try {
-    if (typeof navigator !== "undefined" && typeof navigator.vibrate === "function") {
-      navigator.vibrate(ms);
-    }
+    if (typeof navigator !== "undefined" && typeof navigator.vibrate === "function") navigator.vibrate(ms);
   } catch {}
 }
-
 function formatTime(sec) {
   const s = Math.max(0, Number(sec) || 0);
   const m = Math.floor(s / 60);
@@ -143,11 +143,9 @@ function formatTime(sec) {
 function parseJsonTolerant(text, urlForMsg = "") {
   const raw = String(text ?? "");
   let s = raw.replace(/^\uFEFF/, "").trim();
-
   if (s.startsWith("<!doctype") || s.startsWith("<html") || s.startsWith("<head") || s.startsWith("<")) {
     throw new Error(`Expected JSON but got HTML | url=${urlForMsg} | head=${s.slice(0, 80)}`);
   }
-
   s = s.replace(/,\s*([}\]])/g, "$1");
   return JSON.parse(s);
 }
@@ -156,7 +154,6 @@ function stripOuterQuotes(s) {
   const t = String(s ?? "").trim();
   return t.replace(/^[\"“”]+/, "").replace(/[\"“”]+$/, "").trim();
 }
-
 function normalizeCommon(s) {
   return String(s ?? "")
     .replaceAll("\u00A0", " ")
@@ -165,18 +162,15 @@ function normalizeCommon(s) {
     .replace(/\s+/g, " ")
     .trim();
 }
-
 function escapeRegexLiteral(s) {
   return String(s).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
-
 function normalizeArabicSnippet(snippet) {
   return String(snippet || "")
     .replace(/[\u064B-\u065F\u0670\u06D6-\u06ED]/g, "")
     .replace(/\u0640/g, "")
     .trim();
 }
-
 function buildArabicLooseRegex(snippet) {
   const base = normalizeArabicSnippet(snippet);
   if (!base) return null;
@@ -187,7 +181,6 @@ function buildArabicLooseRegex(snippet) {
 
   const chars = Array.from(base);
   const parts = [];
-
   for (const ch of chars) {
     if (/\s/.test(ch)) {
       parts.push(WS);
@@ -196,14 +189,11 @@ function buildArabicLooseRegex(snippet) {
     const esc = escapeRegexLiteral(ch);
     parts.push(`${TAT}${esc}${DIACR}`);
   }
-
   return new RegExp(parts.join(""), "g");
 }
-
 function isArabicIgnorable(ch) {
   return /[\u064B-\u065F\u0670\u06D6-\u06ED\u0640]/.test(ch);
 }
-
 function foldArabicChar(ch) {
   switch (ch) {
     case "ٱ":
@@ -223,7 +213,6 @@ function foldArabicChar(ch) {
       return ch;
   }
 }
-
 function normalizeArabicForSearch(original) {
   const s = String(original ?? "");
   let norm = "";
@@ -231,7 +220,6 @@ function normalizeArabicForSearch(original) {
 
   for (let i = 0; i < s.length; i += 1) {
     const ch = s[i];
-
     if (isArabicIgnorable(ch)) continue;
 
     if (/\s/.test(ch)) {
@@ -249,14 +237,12 @@ function normalizeArabicForSearch(original) {
 
   return { norm: norm.trim().replace(/\s+/g, " "), map };
 }
-
 function extendArabicMatchEnd(original, endIndexExclusive) {
   const s = String(original ?? "");
   let end = endIndexExclusive;
   while (end < s.length && isArabicIgnorable(s[end])) end += 1;
   return end;
 }
-
 function markArabicByNormalizedMapping(text, snippet, className) {
   const s = String(text ?? "");
   const needleRaw = String(snippet ?? "");
@@ -264,7 +250,6 @@ function markArabicByNormalizedMapping(text, snippet, className) {
 
   const { norm: textN, map: textMap } = normalizeArabicForSearch(s);
   const { norm: needleN } = normalizeArabicForSearch(needleRaw);
-
   if (!textN || !needleN) return null;
 
   const idxN = textN.indexOf(needleN);
@@ -273,7 +258,6 @@ function markArabicByNormalizedMapping(text, snippet, className) {
   const startOrig = textMap[idxN];
   const lastNormPos = idxN + needleN.length - 1;
   const lastOrig = textMap[lastNormPos];
-
   if (startOrig == null || lastOrig == null) return null;
 
   const endOrigExclusive = extendArabicMatchEnd(s, lastOrig + 1);
@@ -286,7 +270,6 @@ function markArabicByNormalizedMapping(text, snippet, className) {
     </>
   );
 }
-
 function applyRegexMarkFirst(text, regex, className) {
   const s = String(text ?? "");
   if (!s || !regex) return s;
@@ -307,7 +290,6 @@ function applyRegexMarkFirst(text, regex, className) {
     </>
   );
 }
-
 function splitAndMarkFirst(text, needle, className) {
   const s = String(text ?? "");
   const n = String(needle ?? "");
@@ -324,7 +306,6 @@ function splitAndMarkFirst(text, needle, className) {
     </>
   );
 }
-
 function markSegmentUncached(text, ayah, lang) {
   const s = String(text ?? "");
   const a = Number(ayah);
@@ -356,13 +337,9 @@ function markSegmentUncached(text, ayah, lang) {
 
   return s;
 }
-
 function useMarkSegmentCached() {
   const cacheRef = useRef(new Map());
-
-  const clear = useCallback(() => {
-    cacheRef.current.clear();
-  }, []);
+  const clear = useCallback(() => cacheRef.current.clear(), []);
 
   const markSegment = useCallback((text, ayah, lang) => {
     const s = String(text ?? "");
@@ -379,23 +356,20 @@ function useMarkSegmentCached() {
 }
 
 /**
- * Smooth inertial wheel (non-linear):
- * - drag updates velocity
- * - inertia uses exponential decay
- * - non-linear boost based on speed
+ * Smooth inertial wheel (non-linear).
  */
 function IOSPickerWheelVertical3D({ disabled, value, onStep }) {
   const ref = useRef(null);
+
   const draggingRef = useRef(false);
   const pointerIdRef = useRef(null);
 
   const lastYRef = useRef(0);
   const lastTsRef = useRef(0);
 
-  const velRef = useRef(0); // px/ms
+  const velRef = useRef(0);
   const accumPxRef = useRef(0);
   const rafRef = useRef(0);
-  const lastVibeRef = useRef(0);
 
   const STEP_PX = 10;
   const MAX_STEPS_PER_FRAME = 14;
@@ -420,32 +394,19 @@ function IOSPickerWheelVertical3D({ disabled, value, onStep }) {
     accumPxRef.current = 0;
   };
 
-  const vibe = (ms = 6) => {
-    const now = performance.now();
-    if (now - (lastVibeRef.current || 0) < 55) return;
-    lastVibeRef.current = now;
-    tactilePulse(ms);
-  };
-
   const tickSteps = () => {
-    let did = false;
     let steps = 0;
-
     while (accumPxRef.current <= -STEP_PX && steps < MAX_STEPS_PER_FRAME) {
       onStep(+1);
       accumPxRef.current += STEP_PX;
-      did = true;
       steps += 1;
     }
-
     while (accumPxRef.current >= STEP_PX && steps < MAX_STEPS_PER_FRAME) {
       onStep(-1);
       accumPxRef.current -= STEP_PX;
-      did = true;
       steps += 1;
     }
-
-    if (did) vibe(6);
+    if (steps) tactilePulse(6);
   };
 
   const startInertia = () => {
@@ -486,17 +447,10 @@ function IOSPickerWheelVertical3D({ disabled, value, onStep }) {
     rafRef.current = requestAnimationFrame(frame);
   };
 
-  const releaseCapture = (node, pointerId) => {
-    try {
-      if (node && pointerId != null && typeof node.releasePointerCapture === "function") {
-        node.releasePointerCapture(pointerId);
-      }
-    } catch {}
-  };
-
   const onPointerDown = (e) => {
     if (disabled) return;
     stop();
+
     draggingRef.current = true;
     pointerIdRef.current = e.pointerId;
 
@@ -529,9 +483,8 @@ function IOSPickerWheelVertical3D({ disabled, value, onStep }) {
     tickSteps();
   };
 
-  const onPointerUp = (e) => {
+  const onPointerUp = () => {
     draggingRef.current = false;
-    releaseCapture(ref.current, pointerIdRef.current);
     pointerIdRef.current = null;
     startInertia();
   };
@@ -540,7 +493,6 @@ function IOSPickerWheelVertical3D({ disabled, value, onStep }) {
     if (disabled) return;
     e.preventDefault();
     e.stopPropagation();
-
     stop();
 
     const dy = e.deltaY;
@@ -550,7 +502,7 @@ function IOSPickerWheelVertical3D({ disabled, value, onStep }) {
     const steps = clamp(Math.round(Math.pow(raw / 18, 1.05)), 1, 22);
 
     for (let i = 0; i < steps; i += 1) onStep(dir);
-    vibe(7);
+    tactilePulse(7);
 
     velRef.current = clamp((dy / 520) * -1, -VEL_LIMIT, VEL_LIMIT);
     startInertia();
@@ -566,11 +518,6 @@ function IOSPickerWheelVertical3D({ disabled, value, onStep }) {
 
   return (
     <div className={`spPicker3D ${disabled ? "disabled" : ""}`}>
-      <div className="spPickerShine" />
-      <div className="spPickerFadeTop" />
-      <div className="spPickerFadeBottom" />
-      <div className="spPickerBar" />
-
       <div
         ref={ref}
         className="spPickerViewport"
@@ -633,7 +580,7 @@ function SinglePlayerMain({ verse, markSegment }) {
             {markSegment((verse?.tr || "—").trim(), ay, "tr")}
           </div>
 
-          <div style={{ height: 220 }} />
+          <div style={{ height: 240 }} />
         </div>
       </div>
     </div>
@@ -678,6 +625,14 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    try {
+      const ua = navigator.userAgent || "";
+      const isSafari = /safari/i.test(ua) && !/chrome|crios|chromium|android/i.test(ua);
+      document.documentElement.classList.toggle("isSafari", isSafari);
+    } catch {}
+  }, []);
+
+  useEffect(() => {
     versesRef.current = verses;
     activeIndexRef.current = activeIndex;
     durationRef.current = duration;
@@ -692,17 +647,18 @@ export default function App() {
     [selectedSurah]
   );
 
-  // Set CSS var for padding-bottom from dock height (no ResizeObserver loop)
+  // Only measure dock height on resize (no observer loops)
   useEffect(() => {
-    const updateDockH = () => {
+    const update = () => {
       const dock = dockRef.current;
       if (!dock) return;
       const h = Math.ceil(dock.getBoundingClientRect().height);
       document.documentElement.style.setProperty("--dockH", `${h}px`);
     };
-    updateDockH();
-    window.addEventListener("resize", updateDockH);
-    return () => window.removeEventListener("resize", updateDockH);
+    const onResize = () => requestAnimationFrame(update);
+    update();
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
   }, []);
 
   const seekTo = useCallback((t, autoPlay = false) => {
@@ -785,7 +741,6 @@ export default function App() {
     });
   }, [seekTo]);
 
-  // keyboard shortcuts: Space, arrows, R
   useEffect(() => {
     const onKey = (e) => {
       if (e.code === "Space") {
@@ -809,7 +764,6 @@ export default function App() {
     return () => window.removeEventListener("keydown", onKey);
   }, [nextAyah, onPlayPause, prevAyah, toggleRepeat]);
 
-  // load verses on surah change
   useEffect(() => {
     let cancelled = false;
 
@@ -863,7 +817,6 @@ export default function App() {
     };
   }, [versesSrc, clearCache, seekVerse]);
 
-  // audio listeners (throttled UI updates)
   useEffect(() => {
     const a = audioRef.current;
     if (!a) return;
@@ -906,15 +859,16 @@ export default function App() {
     };
   }, []);
 
-  // repeat logic tick (lightweight)
+  // repeat loop (interval, lightweight)
   useEffect(() => {
     if (!repeatMode) return;
     const id = window.setInterval(() => {
       const a = audioRef.current;
       if (!a) return;
-      if (!versesRef.current.length) return;
 
       const versesNow = versesRef.current;
+      if (!versesNow.length) return;
+
       let idx = activeIndexRef.current;
       const t = currentTimeRef.current;
 
@@ -991,15 +945,28 @@ export default function App() {
       <main className="content">
         {header}
         {error ? <div className="errorBox">{error}</div> : null}
-
         <SinglePlayerMain verse={activeVerse} markSegment={markSegment} />
       </main>
 
-      {/* ✅ ONLY PLAYER: bottom fixed */}
       <div className="bottomDock" ref={dockRef} aria-label="Bottom Player">
         <audio ref={audioRef} src={audioSrc} preload="metadata" playsInline />
 
-        {/* ✅ SINGLE ROW: selector + buttons + wheel all aligned */}
+        {/* SEEK BAR TOP */}
+        <div className="dockSeekTop">
+          <input
+            className="dockSeek"
+            type="range"
+            min={0}
+            max={canSeek ? duration : 0}
+            step={0.01}
+            value={canSeek ? currentTime : 0}
+            disabled={!canSeek}
+            onChange={(e) => seekTo(Number(e.target.value), isPlaying)}
+            aria-label="MP3 seek bar"
+          />
+        </div>
+
+        {/* ONE HORIZONTAL ROW */}
         <div className="dockRow">
           <select
             className="dockSelectBig"
@@ -1030,7 +997,7 @@ export default function App() {
             ▶
           </button>
 
-          <div className="dockWheelWrap" aria-label="Wheel wrap">
+          <div className="dockWheelWrap">
             <IOSPickerWheelVertical3D
               disabled={!verses.length}
               value={Number(activeVerse?.ayah || 0)}
@@ -1054,30 +1021,10 @@ export default function App() {
           >
             {repeatMode === 2 ? "rr" : "r"}
           </button>
-        </div>
 
-        {/* ✅ BIGGER time text + seek */}
-        <div className="dockTimeRow mono">
-          <span className="dockTimeBig">
+          <span className="dockTimeBig mono">
             {formatTime(currentTime)} / {formatTime(duration)}
           </span>
-        </div>
-
-        <div className="dockSeekRow">
-          <input
-            className="dockSeek"
-            type="range"
-            min={0}
-            max={canSeek ? duration : 0}
-            step={0.01}
-            value={canSeek ? currentTime : 0}
-            disabled={!canSeek}
-            onChange={(e) => {
-              const t = Number(e.target.value);
-              seekTo(t, isPlaying);
-            }}
-            aria-label="MP3 süre çubuğu"
-          />
         </div>
       </div>
     </div>
