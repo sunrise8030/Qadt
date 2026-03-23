@@ -17,7 +17,7 @@ const SURAHES = [
   },
   {
   id: 19,
-  slug: "maryam",
+  slug: "meryem",
   nameAr: "مريم",
   nameTr: "Meryem",
   nameDe: "Maryam",
