@@ -1,5 +1,5 @@
 /* =========================
-   FILE: src/styles.css (FULL - MOBILE FIX + SMOOTH SEEK LOOK + BIG SELECT + VISIBLE WHEEL)
+   FILE: src/styles.css (FULL - MOBILE FIX + SMOOTH SEEK + BIG THUMB + BIG SELECT + VISIBLE WHEEL)
    ========================= */
 
 :root{
@@ -8,7 +8,7 @@
   --text:rgba(255,255,255,0.92);
   --muted:rgba(255,255,255,0.62);
 
-  /* JS bunu güncelliyor */
+  /* JS güncelliyor */
   --dockH: 230px;
 
   --markRed: rgba(235, 78, 62, 1);
@@ -43,6 +43,8 @@ html,body{
   padding: 14px;
   max-width: 1100px;
   margin: 0 auto;
+
+  /* ✅ içerik dock altında kalmasın */
   padding-bottom: calc(var(--dockH) + 18px + env(safe-area-inset-bottom));
 }
 
@@ -123,11 +125,11 @@ html,body{
 
 .dockSeekTop{ padding: 6px 4px 12px; }
 
-/* Seek: progress = CSS var --seekP */
+/* ✅ Smooth seek look: progress = --seekP (JS inline style set ediyor) */
 .dockSeek{
   --seekP: 0%;
-
   width: 100%;
+
   -webkit-appearance: none;
   appearance: none;
 
@@ -136,7 +138,6 @@ html,body{
   outline: none;
   cursor: pointer;
 
-  /* dolu kısım boyalı */
   background: linear-gradient(
     90deg,
     rgba(145,205,250,0.85) 0%,
@@ -148,13 +149,12 @@ html,body{
   touch-action: none;
 }
 
-/* WebKit track */
+/* WebKit */
 .dockSeek::-webkit-slider-runnable-track{
   height: 14px;
   border-radius: 999px;
   background: transparent;
 }
-/* WebKit thumb */
 .dockSeek::-webkit-slider-thumb{
   -webkit-appearance: none;
   appearance: none;
@@ -187,6 +187,7 @@ html,body{
   box-shadow: 0 12px 26px rgba(0,0,0,0.40);
 }
 
+/* Row */
 .dockRow{
   display:flex;
   align-items:center;
@@ -197,6 +198,7 @@ html,body{
   white-space: nowrap;
 }
 
+/* Big selector */
 .dockSelectBig{
   -webkit-appearance: none;
   appearance: none;
@@ -216,740 +218,6 @@ html,body{
   border: 1px solid rgba(255,255,255,0.20);
 
   flex: 0 0 auto;
-}
-
-.spBtn{
-  min-width: 70px;
-  height: 70px;
-  padding: 0 16px;
-  border-radius: 18px;
-  cursor:pointer;
-  font-weight: 950;
-  font-size: 28px;
-  color: rgba(10,14,22,0.98);
-  border: 1px solid rgba(255,255,255,0.22);
-  background: linear-gradient(180deg, rgba(210,235,255,1), rgba(145,205,250,1));
-  box-shadow:
-    0 10px 22px rgba(0,0,0,0.38),
-    0 3px 0 rgba(255,255,255,0.22) inset,
-    0 -6px 10px rgba(0,0,0,0.22) inset;
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  touch-action: manipulation;
-  flex: 0 0 auto;
-}
-.spBtn:active{ transform: translateY(2px); }
-
-.spBtnPrimary{
-  min-width: 126px;
-  height: 78px;
-  font-size: 32px;
-  background: linear-gradient(180deg, rgba(200,255,220,1), rgba(110,230,165,1));
-}
-
-.spRBtn{
-  min-width: 70px;
-  height: 70px;
-  border-radius: 18px;
-  border: 1px solid rgba(255,255,255,0.18);
-  background: rgba(0,0,0,0.22);
-  color: rgba(255,255,255,0.90);
-  font-weight: 950;
-  font-size: 22px;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex: 0 0 auto;
-}
-
-.dockTimeBig{
-  font-size: 18px;
-  font-weight: 950;
-  color: rgba(255,255,255,0.90);
-  border: 1px solid rgba(255,255,255,0.16);
-  background: rgba(0,0,0,0.26);
-  padding: 12px 14px;
-  border-radius: 999px;
-  flex: 0 0 auto;
-}
-
-.dockWheelWrap{ flex: 0 0 auto; display:flex; align-items:center; }
-
-.spPicker3D{
-  width: 150px;
-  height: 190px;
-  border-radius: 18px;
-  border: 1px solid rgba(255,255,255,0.18);
-  background: rgba(0,0,0,0.26);
-  box-shadow:
-    0 14px 28px rgba(0,0,0,0.35),
-    0 3px 0 rgba(255,255,255,0.14) inset,
-    0 -10px 16px rgba(0,0,0,0.22) inset;
-  position: relative;
-  overflow: hidden;
-  flex: 0 0 auto;
-  touch-action: none;
-}
-.spPicker3D.disabled{ opacity: 0.55; pointer-events:none; }
-
-.spPickerViewport{
-  width: 100%;
-  height: 100%;
-  outline: none;
-  display:grid;
-  place-items:center;
-  perspective: 980px;
-}
-.spPickerItems3D{
-  width: 100%;
-  height: 100%;
-  display:grid;
-  place-items:center;
-  transform-style: preserve-3d;
-}
-.spPickerItem3D{
-  position:absolute;
-  width: 100%;
-  text-align:center;
-  font-variant-numeric: tabular-nums;
-  font-weight: 950;
-  font-size: 40px;
-  letter-spacing: 0.6px;
-  color: rgba(255,255,255,0.24);
-  transform-origin: center center;
-  text-shadow: 0 2px 10px rgba(0,0,0,0.25);
-}
-.spPickerItem3D.active{
-  color: rgba(255,255,255,0.98);
-  text-shadow: 0 2px 14px rgba(0,0,0,0.38);
-}
-
-/* Segment */
-.mark{
-  display:inline;
-  padding: 0.10em 0.34em;
-  border-radius: 0.55em;
-  margin: 0 0.06em;
-  -webkit-box-decoration-break: clone;
-  box-decoration-break: clone;
-}
-.markRed{ color: var(--markRed) !important; background: var(--markRedBg); }
-.markGreen{ color: var(--markGreen) !important; background: var(--markGreenBg); }
-.fontRed{ color: var(--markRed) !important; }
-.fontGreen{ color: var(--markGreen) !important; }
-
-@media (max-width: 520px){
-  .content{ padding: 12px; padding-bottom: calc(var(--dockH) + 14px + env(safe-area-inset-bottom)); }
-
-  .dockSelectBig{
-    height: 64px;
-    min-width: 240px;
-    font-size: 16px;
-    border-radius: 16px;
-  }
-
-  .spBtn{ min-width: 60px; height: 60px; font-size: 24px; border-radius: 16px; }
-  .spBtnPrimary{ min-width: 112px; height: 66px; font-size: 28px; }
-  .spRBtn{ min-width: 60px; height: 60px; font-size: 20px; border-radius: 16px; }
-
-  .spPicker3D{ width: 138px; height: 176px; }
-  .spPickerItem3D{ font-size: 36px; }
-
-  .dockTimeBig{ font-size: 16px; padding: 10px 12px; }
-
-  .dockSeek{ height: 14px; }
-  .dockSeek::-webkit-slider-thumb{ width: 28px; height: 28px; margin-top: -7px; }
-  .dockSeek::-moz-range-thumb{ width: 28px; height: 28px; }
-}
-
-.isSafari .bottomDock{
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-}/* =========================
-   FILE: src/styles.css (FULL - MOBILE FIX + SMOOTH SEEK LOOK + BIG SELECT + VISIBLE WHEEL)
-   ========================= */
-
-:root{
-  --bg:#0b0f16;
-  --border:rgba(255,255,255,0.10);
-  --text:rgba(255,255,255,0.92);
-  --muted:rgba(255,255,255,0.62);
-
-  /* JS bunu güncelliyor */
-  --dockH: 230px;
-
-  --markRed: rgba(235, 78, 62, 1);
-  --markRedBg: rgba(235, 78, 62, 0.18);
-  --markGreen: rgba(82, 210, 140, 1);
-  --markGreenBg: rgba(82, 210, 140, 0.16);
-}
-
-*{ box-sizing:border-box; }
-
-html{
-  -webkit-text-size-adjust: 100%;
-  text-size-adjust: 100%;
-}
-
-html,body{
-  height:100%;
-  margin:0;
-  background:
-    radial-gradient(1200px 800px at 30% 15%, rgba(120,120,255,0.10), transparent 55%),
-    radial-gradient(1200px 800px at 70% 35%, rgba(255,120,120,0.08), transparent 55%),
-    var(--bg);
-  color:var(--text);
-  font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial,"Noto Sans","Apple Color Emoji","Segoe UI Emoji";
-}
-
-.mono{ font-variant-numeric: tabular-nums; }
-
-.appShell{ display:grid; grid-template-columns:1fr; min-height:100vh; }
-
-.content{
-  padding: 14px;
-  max-width: 1100px;
-  margin: 0 auto;
-  padding-bottom: calc(var(--dockH) + 18px + env(safe-area-inset-bottom));
-}
-
-/* Header */
-.surahHeader{
-  border:1px solid var(--border);
-  background:rgba(15,21,32,0.86);
-  border-radius:16px;
-  padding:14px 16px;
-  display:grid;
-  grid-template-columns:1fr auto;
-  gap:10px;
-}
-.surahTitle{ margin:0; font-size:20px; }
-.surahSub{ color:var(--muted); margin-top:3px; }
-.surahHeaderRight{ font-size:18px; align-self:start; }
-
-.errorBox{
-  margin-top:12px;
-  border:1px solid rgba(255,120,120,0.35);
-  background:rgba(255,120,120,0.22);
-  border-radius:12px;
-  padding:10px 12px;
-}
-
-/* Single Player */
-.singlePlayerMain{ margin-top: 14px; }
-.singlePlayerCard{
-  width: 100%;
-  background: rgba(15,21,32,0.94);
-  border: 1px solid rgba(255,255,255,0.14);
-  border-radius: 20px;
-  box-shadow: 0 30px 90px rgba(0,0,0,0.40);
-  padding: 14px;
-}
-.singlePlayerLines{ display:grid; gap:10px; }
-.singlePlayerLine{
-  border: 1px solid rgba(255,255,255,0.10);
-  border-radius: 16px;
-  padding: 12px 14px;
-  background: rgba(0,0,0,0.26);
-}
-.singlePlayerLines > :nth-child(odd){ background: rgba(255,255,255,0.10); }
-
-.singlePlayerLineAr{
-  direction: rtl;
-  unicode-bidi: isolate-override;
-  text-align: right;
-  font-family: "Noto Naskh Arabic","Amiri","Scheherazade New","Noto Sans Arabic", serif;
-  font-size: clamp(44px, 7.0vw, 78px);
-  line-height: 1.75;
-  white-space: pre-wrap;
-}
-.singlePlayerLineDe,
-.singlePlayerLineTr{
-  font-size: clamp(26px, 4.0vw, 40px);
-  line-height: 1.55;
-  white-space: pre-wrap;
-  color: rgba(255,255,255,0.86);
-}
-
-/* Bottom Dock */
-.bottomDock{
-  position: fixed;
-  left: 12px;
-  right: 12px;
-  bottom: calc(12px + env(safe-area-inset-bottom));
-  z-index: 10001;
-
-  border-radius: 20px;
-  border: 1px solid rgba(255,255,255,0.16);
-  background: rgba(0,0,0,0.56);
-  padding: 12px;
-
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-}
-
-.dockSeekTop{ padding: 6px 4px 12px; }
-
-/* Seek: progress = CSS var --seekP */
-.dockSeek{
-  --seekP: 0%;
-
-  width: 100%;
-  -webkit-appearance: none;
-  appearance: none;
-
-  height: 14px;
-  border-radius: 999px;
-  outline: none;
-  cursor: pointer;
-
-  /* dolu kısım boyalı */
-  background: linear-gradient(
-    90deg,
-    rgba(145,205,250,0.85) 0%,
-    rgba(145,205,250,0.85) var(--seekP),
-    rgba(255,255,255,0.18) var(--seekP),
-    rgba(255,255,255,0.18) 100%
-  );
-
-  touch-action: none;
-}
-
-/* WebKit track */
-.dockSeek::-webkit-slider-runnable-track{
-  height: 14px;
-  border-radius: 999px;
-  background: transparent;
-}
-/* WebKit thumb */
-.dockSeek::-webkit-slider-thumb{
-  -webkit-appearance: none;
-  appearance: none;
-  width: 30px;
-  height: 30px;
-  border-radius: 999px;
-  background: rgba(145,205,250,1);
-  border: 2px solid rgba(255,255,255,0.78);
-  box-shadow: 0 12px 26px rgba(0,0,0,0.40);
-  margin-top: -8px;
-}
-
-/* Firefox */
-.dockSeek::-moz-range-track{
-  height: 14px;
-  border-radius: 999px;
-  background: rgba(255,255,255,0.18);
-}
-.dockSeek::-moz-range-progress{
-  height: 14px;
-  border-radius: 999px;
-  background: rgba(145,205,250,0.65);
-}
-.dockSeek::-moz-range-thumb{
-  width: 30px;
-  height: 30px;
-  border-radius: 999px;
-  background: rgba(145,205,250,1);
-  border: 2px solid rgba(255,255,255,0.78);
-  box-shadow: 0 12px 26px rgba(0,0,0,0.40);
-}
-
-.dockRow{
-  display:flex;
-  align-items:center;
-  gap: 10px;
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  white-space: nowrap;
-}
-
-.dockSelectBig{
-  -webkit-appearance: none;
-  appearance: none;
-
-  height: 70px;
-  min-width: 260px;
-  max-width: 360px;
-  padding: 0 16px;
-
-  border-radius: 18px;
-  font-size: 18px;
-  font-weight: 950;
-  line-height: 1;
-
-  background: rgba(0,0,0,0.28);
-  color: rgba(255,255,255,0.94);
-  border: 1px solid rgba(255,255,255,0.20);
-
-  flex: 0 0 auto;
-}
-
-.spBtn{
-  min-width: 70px;
-  height: 70px;
-  padding: 0 16px;
-  border-radius: 18px;
-  cursor:pointer;
-  font-weight: 950;
-  font-size: 28px;
-  color: rgba(10,14,22,0.98);
-  border: 1px solid rgba(255,255,255,0.22);
-  background: linear-gradient(180deg, rgba(210,235,255,1), rgba(145,205,250,1));
-  box-shadow:
-    0 10px 22px rgba(0,0,0,0.38),
-    0 3px 0 rgba(255,255,255,0.22) inset,
-    0 -6px 10px rgba(0,0,0,0.22) inset;
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  touch-action: manipulation;
-  flex: 0 0 auto;
-}
-.spBtn:active{ transform: translateY(2px); }
-
-.spBtnPrimary{
-  min-width: 126px;
-  height: 78px;
-  font-size: 32px;
-  background: linear-gradient(180deg, rgba(200,255,220,1), rgba(110,230,165,1));
-}
-
-.spRBtn{
-  min-width: 70px;
-  height: 70px;
-  border-radius: 18px;
-  border: 1px solid rgba(255,255,255,0.18);
-  background: rgba(0,0,0,0.22);
-  color: rgba(255,255,255,0.90);
-  font-weight: 950;
-  font-size: 22px;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex: 0 0 auto;
-}
-
-.dockTimeBig{
-  font-size: 18px;
-  font-weight: 950;
-  color: rgba(255,255,255,0.90);
-  border: 1px solid rgba(255,255,255,0.16);
-  background: rgba(0,0,0,0.26);
-  padding: 12px 14px;
-  border-radius: 999px;
-  flex: 0 0 auto;
-}
-
-.dockWheelWrap{ flex: 0 0 auto; display:flex; align-items:center; }
-
-.spPicker3D{
-  width: 150px;
-  height: 190px;
-  border-radius: 18px;
-  border: 1px solid rgba(255,255,255,0.18);
-  background: rgba(0,0,0,0.26);
-  box-shadow:
-    0 14px 28px rgba(0,0,0,0.35),
-    0 3px 0 rgba(255,255,255,0.14) inset,
-    0 -10px 16px rgba(0,0,0,0.22) inset;
-  position: relative;
-  overflow: hidden;
-  flex: 0 0 auto;
-  touch-action: none;
-}
-.spPicker3D.disabled{ opacity: 0.55; pointer-events:none; }
-
-.spPickerViewport{
-  width: 100%;
-  height: 100%;
-  outline: none;
-  display:grid;
-  place-items:center;
-  perspective: 980px;
-}
-.spPickerItems3D{
-  width: 100%;
-  height: 100%;
-  display:grid;
-  place-items:center;
-  transform-style: preserve-3d;
-}
-.spPickerItem3D{
-  position:absolute;
-  width: 100%;
-  text-align:center;
-  font-variant-numeric: tabular-nums;
-  font-weight: 950;
-  font-size: 40px;
-  letter-spacing: 0.6px;
-  color: rgba(255,255,255,0.24);
-  transform-origin: center center;
-  text-shadow: 0 2px 10px rgba(0,0,0,0.25);
-}
-.spPickerItem3D.active{
-  color: rgba(255,255,255,0.98);
-  text-shadow: 0 2px 14px rgba(0,0,0,0.38);
-}
-
-/* Segment */
-.mark{
-  display:inline;
-  padding: 0.10em 0.34em;
-  border-radius: 0.55em;
-  margin: 0 0.06em;
-  -webkit-box-decoration-break: clone;
-  box-decoration-break: clone;
-}
-.markRed{ color: var(--markRed) !important; background: var(--markRedBg); }
-.markGreen{ color: var(--markGreen) !important; background: var(--markGreenBg); }
-.fontRed{ color: var(--markRed) !important; }
-.fontGreen{ color: var(--markGreen) !important; }
-
-@media (max-width: 520px){
-  .content{ padding: 12px; padding-bottom: calc(var(--dockH) + 14px + env(safe-area-inset-bottom)); }
-
-  .dockSelectBig{
-    height: 64px;
-    min-width: 240px;
-    font-size: 16px;
-    border-radius: 16px;
-  }
-
-  .spBtn{ min-width: 60px; height: 60px; font-size: 24px; border-radius: 16px; }
-  .spBtnPrimary{ min-width: 112px; height: 66px; font-size: 28px; }
-  .spRBtn{ min-width: 60px; height: 60px; font-size: 20px; border-radius: 16px; }
-
-  .spPicker3D{ width: 138px; height: 176px; }
-  .spPickerItem3D{ font-size: 36px; }
-
-  .dockTimeBig{ font-size: 16px; padding: 10px 12px; }
-
-  .dockSeek{ height: 14px; }
-  .dockSeek::-webkit-slider-thumb{ width: 28px; height: 28px; margin-top: -7px; }
-  .dockSeek::-moz-range-thumb{ width: 28px; height: 28px; }
-}
-
-.isSafari .bottomDock{
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-}/* =========================
-   FILE: src/styles.css (FULL - MOBILE CHROME/FIREFOX FIX + TOP SEEK THUMB + BIG SELECT + VISIBLE WHEEL)
-   ========================= */
-
-:root{
-  --bg:#0b0f16;
-  --border:rgba(255,255,255,0.10);
-  --text:rgba(255,255,255,0.92);
-  --muted:rgba(255,255,255,0.62);
-
-  /* JS bunu güncelleyecek */
-  --dockH: 230px;
-
-  --markRed: rgba(235, 78, 62, 1);
-  --markRedBg: rgba(235, 78, 62, 0.18);
-  --markGreen: rgba(82, 210, 140, 1);
-  --markGreenBg: rgba(82, 210, 140, 0.16);
-}
-
-*{ box-sizing:border-box; }
-
-html{
-  -webkit-text-size-adjust: 100%;
-  text-size-adjust: 100%;
-}
-
-html,body{
-  height:100%;
-  margin:0;
-  background:
-    radial-gradient(1200px 800px at 30% 15%, rgba(120,120,255,0.10), transparent 55%),
-    radial-gradient(1200px 800px at 70% 35%, rgba(255,120,120,0.08), transparent 55%),
-    var(--bg);
-  color:var(--text);
-  font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial,"Noto Sans","Apple Color Emoji","Segoe UI Emoji";
-}
-
-.mono{ font-variant-numeric: tabular-nums; }
-
-.appShell{ display:grid; grid-template-columns:1fr; min-height:100vh; }
-
-/* ✅ En kritik kısım: içerik altına dock kadar boşluk */
-.content{
-  padding: 14px;
-  max-width: 1100px;
-  margin: 0 auto;
-  padding-bottom: calc(var(--dockH) + 18px);
-}
-
-/* Header */
-.surahHeader{
-  border:1px solid var(--border);
-  background:rgba(15,21,32,0.86);
-  border-radius:16px;
-  padding:14px 16px;
-  display:grid;
-  grid-template-columns:1fr auto;
-  gap:10px;
-}
-.surahTitle{ margin:0; font-size:20px; }
-.surahSub{ color:var(--muted); margin-top:3px; }
-.surahHeaderRight{ font-size:18px; align-self:start; }
-
-.errorBox{
-  margin-top:12px;
-  border:1px solid rgba(255,120,120,0.35);
-  background:rgba(255,120,120,0.22);
-  border-radius:12px;
-  padding:10px 12px;
-}
-
-/* Single Player */
-.singlePlayerMain{ margin-top: 14px; }
-.singlePlayerCard{
-  width: 100%;
-  background: rgba(15,21,32,0.94);
-  border: 1px solid rgba(255,255,255,0.14);
-  border-radius: 20px;
-  box-shadow: 0 30px 90px rgba(0,0,0,0.40);
-  padding: 14px;
-}
-.singlePlayerLines{ display:grid; gap:10px; }
-.singlePlayerLine{
-  border: 1px solid rgba(255,255,255,0.10);
-  border-radius: 16px;
-  padding: 12px 14px;
-  background: rgba(0,0,0,0.26);
-}
-.singlePlayerLines > :nth-child(odd){ background: rgba(255,255,255,0.10); }
-
-.singlePlayerLineAr{
-  direction: rtl;
-  unicode-bidi: isolate-override;
-  text-align: right;
-  font-family: "Noto Naskh Arabic","Amiri","Scheherazade New","Noto Sans Arabic", serif;
-  font-size: clamp(44px, 7.0vw, 78px);
-  line-height: 1.75;
-  white-space: pre-wrap;
-}
-.singlePlayerLineDe,
-.singlePlayerLineTr{
-  font-size: clamp(26px, 4.0vw, 40px);
-  line-height: 1.55;
-  white-space: pre-wrap;
-  color: rgba(255,255,255,0.86);
-}
-
-/* =========================
-   ✅ BOTTOM DOCK (FIXED)
-   ========================= */
-.bottomDock{
-  position: fixed;
-  left: 12px;
-  right: 12px;
-  bottom: calc(12px + env(safe-area-inset-bottom));
-  z-index: 10001;
-
-  border-radius: 20px;
-  border: 1px solid rgba(255,255,255,0.16);
-  background: rgba(0,0,0,0.56);
-  padding: 12px;
-
-  /* Chrome/Firefox performansı daha iyi */
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-}
-
-/* Seek üstte */
-.dockSeekTop{ padding: 6px 4px 12px; }
-
-.dockSeek{
-  width: 100%;
-  -webkit-appearance: none;
-  appearance: none;
-
-  height: 14px;
-  border-radius: 999px;
-  background: rgba(255,255,255,0.18);
-  outline: none;
-  cursor: pointer;
-}
-
-/* WebKit track */
-.dockSeek::-webkit-slider-runnable-track{
-  height: 14px;
-  border-radius: 999px;
-  background: rgba(255,255,255,0.18);
-}
-/* WebKit thumb (BÜYÜK TOPAÇ) */
-.dockSeek::-webkit-slider-thumb{
-  -webkit-appearance: none;
-  appearance: none;
-  width: 30px;
-  height: 30px;
-  border-radius: 999px;
-  background: rgba(145,205,250,1);
-  border: 2px solid rgba(255,255,255,0.78);
-  box-shadow: 0 12px 26px rgba(0,0,0,0.40);
-  margin-top: -8px; /* track 14px */
-}
-
-/* Firefox */
-.dockSeek::-moz-range-track{
-  height: 14px;
-  border-radius: 999px;
-  background: rgba(255,255,255,0.18);
-}
-.dockSeek::-moz-range-progress{
-  height: 14px;
-  border-radius: 999px;
-  background: rgba(145,205,250,0.65);
-}
-.dockSeek::-moz-range-thumb{
-  width: 30px;
-  height: 30px;
-  border-radius: 999px;
-  background: rgba(145,205,250,1);
-  border: 2px solid rgba(255,255,255,0.78);
-  box-shadow: 0 12px 26px rgba(0,0,0,0.40);
-}
-
-/* ✅ Tek yatay satır */
-.dockRow{
-  display:flex;
-  align-items:center;
-  gap: 10px;
-  flex-wrap: nowrap;
-
-  /* Eğer sığmazsa yatay kaydırılabilir */
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  white-space: nowrap;
-}
-
-/* ✅ SELECT “minicik olmasın” */
-.dockSelectBig{
-  -webkit-appearance: none;
-  appearance: none;
-
-  height: 70px;
-  min-width: 260px;
-  max-width: 360px;
-  padding: 0 16px;
-
-  border-radius: 18px;
-  font-size: 18px;
-  font-weight: 950;
-  line-height: 1;
-
-  background: rgba(0,0,0,0.28);
-  color: rgba(255,255,255,0.94);
-  border: 1px solid rgba(255,255,255,0.20);
-
-  flex: 0 0 auto; /* ✅ flex shrink yok */
 }
 
 /* Buttons */
@@ -999,7 +267,6 @@ html,body{
   flex: 0 0 auto;
 }
 
-/* Time (büyük) */
 .dockTimeBig{
   font-size: 18px;
   font-weight: 950;
@@ -1011,14 +278,9 @@ html,body{
   flex: 0 0 auto;
 }
 
-/* ✅ Wheel kesin görünür */
-.dockWheelWrap{
-  flex: 0 0 auto;
-  display:flex;
-  align-items:center;
-}
+/* Wheel */
+.dockWheelWrap{ flex: 0 0 auto; display:flex; align-items:center; }
 
-/* Wheel (büyük) */
 .spPicker3D{
   width: 150px;
   height: 190px;
@@ -1082,9 +344,8 @@ html,body{
 .fontRed{ color: var(--markRed) !important; }
 .fontGreen{ color: var(--markGreen) !important; }
 
-/* Mobile */
 @media (max-width: 520px){
-  .content{ padding: 12px; padding-bottom: calc(var(--dockH) + 14px); }
+  .content{ padding: 12px; padding-bottom: calc(var(--dockH) + 14px + env(safe-area-inset-bottom)); }
 
   .dockSelectBig{
     height: 64px;
