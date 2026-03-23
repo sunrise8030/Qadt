@@ -648,18 +648,37 @@ export default function App() {
   );
 
   // Only measure dock height on resize (no observer loops)
-  useEffect(() => {
-    const update = () => {
-      const dock = dockRef.current;
-      if (!dock) return;
-      const h = Math.ceil(dock.getBoundingClientRect().height);
+ useEffect(() => {
+  const updateDockH = () => {
+    const dock = dockRef.current;
+    if (!dock) return;
+
+    const h = Math.ceil(dock.getBoundingClientRect().height);
+    const prev =
+      Number.parseInt(getComputedStyle(document.documentElement).getPropertyValue("--dockH") || "0", 10) || 0;
+
+    // sadece değişince set et (layout loop riskini keser)
+    if (Math.abs(h - prev) >= 2) {
       document.documentElement.style.setProperty("--dockH", `${h}px`);
-    };
-    const onResize = () => requestAnimationFrame(update);
-    update();
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
-  }, []);
+    }
+  };
+
+  const rafUpdate = () => requestAnimationFrame(updateDockH);
+
+  rafUpdate();
+  const t1 = setTimeout(rafUpdate, 150);
+  const t2 = setTimeout(rafUpdate, 450);
+
+  window.addEventListener("resize", rafUpdate);
+  window.addEventListener("orientationchange", rafUpdate);
+
+  return () => {
+    clearTimeout(t1);
+    clearTimeout(t2);
+    window.removeEventListener("resize", rafUpdate);
+    window.removeEventListener("orientationchange", rafUpdate);
+  };
+}, []);
 
   const seekTo = useCallback((t, autoPlay = false) => {
     const a = audioRef.current;
