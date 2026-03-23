@@ -245,7 +245,7 @@ html,body{
 }
 .btnSinglePlayer:hover{ filter: brightness(1.06); }
 
-/* Table (ALWAYS 3 columns, scroll on mobile) */
+/* Table (ALWAYS 3 columns + No = 4-grid, scroll on mobile) */
 .tableWrap{
   margin-top:14px;
   border:1px solid var(--border);
@@ -257,11 +257,13 @@ html,body{
   touch-action: pan-x pan-y;
 }
 
+/* hard guarantee: force horizontal scroll instead of collapsing columns */
 .tableHeader, .row{ min-width:980px; }
 
 .tableHeader{
   display:grid;
   grid-template-columns: var(--w-no) var(--w-ar) var(--w-de) var(--w-tr);
+  grid-auto-flow: column;
   padding:12px;
   border-bottom:1px solid var(--border);
   color:var(--muted);
@@ -278,6 +280,7 @@ html,body{
   width:100%;
   display:grid;
   grid-template-columns: var(--w-no) var(--w-ar) var(--w-de) var(--w-tr);
+  grid-auto-flow: column;
   border-bottom:1px solid rgba(255,255,255,0.06);
   padding:10px 12px;
   text-align:left;
@@ -313,6 +316,7 @@ html,body{
   display:flex;
   align-items:flex-start;
   min-height: 100%;
+  min-width: 0; /* critical for grid: allow wrap instead of overflow breaking columns */
 }
 .cell:last-child{ border-right:none; }
 
@@ -465,8 +469,10 @@ html,body{
     0 -10px 16px rgba(0,0,0,0.22) inset;
   position: relative;
   overflow: hidden;
-  touch-action: pan-y pinch-zoom;
   flex: 0 0 auto;
+
+  /* critical: prevent page scroll / overscroll while dragging the dial */
+  touch-action: none;
 }
 .spPicker3D.disabled{ opacity: 0.55; pointer-events:none; }
 
