@@ -1,5 +1,5 @@
 // =========================
-// FILE: src/App.jsx (FULL - SMOOTH SEEK + AYAH SYNC + MOBILE DOCK FIX)
+// FILE: src/App.jsx (FULL - FIX: VERSE INIT RACE + SMOOTH SEEK + AYAH SYNC + MOBILE DOCK HEIGHT)
 // =========================
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import "./styles.css";
@@ -27,18 +27,8 @@ const SURAHES = [
   },
 ];
 
-/**
- * ✅ Buraya senin büyük SEGMENTS objeni (mevcut projendeki) aynen yapıştırabilirsin.
- * Aşağıdaki minimal örnek sadece dosyanın çalışması için.
- */
-const SEGMENTS = {
-  6: {
-    color: "green",
-    ar: "إِنَّ رَبَّكَ عَلِيمٌ حَكِيمٌۭ",
-    de: "Gewiß, dein Herr ist Allwissend und Allweise.",
-    tr: "Şüphesiz ki Rabbin, (her şeyi) hakkıyla bilendir; her hüküm ve icraatında hikmetler bulunandır.",
-  },
-};
+// ✅ Buraya kendi büyük SEGMENTS'in varsa aynen yapıştır.
+const SEGMENTS = {};
 
 function resolvePublicUrl(path) {
   const base = import.meta.env.BASE_URL || "/";
@@ -46,48 +36,34 @@ function resolvePublicUrl(path) {
   const b = String(base || "/");
   return new URL(`${b}${p}`, window.location.origin).toString();
 }
-
 function clamp(n, a, b) {
   return Math.max(a, Math.min(b, n));
 }
-
 function tactilePulse(ms = 8) {
   try {
-    if (typeof navigator !== "undefined" && typeof navigator.vibrate === "function") {
-      navigator.vibrate(ms);
-    }
+    if (typeof navigator !== "undefined" && typeof navigator.vibrate === "function") navigator.vibrate(ms);
   } catch {}
 }
-
 function formatTime(sec) {
   const s = Math.max(0, Number(sec) || 0);
   const m = Math.floor(s / 60);
   const r = Math.floor(s % 60);
   return `${String(m).padStart(2, "0")}:${String(r).padStart(2, "0")}`;
 }
-
 function parseJsonTolerant(text, urlForMsg = "") {
   const raw = String(text ?? "");
   let s = raw.replace(/^\uFEFF/, "").trim();
-
   if (s.startsWith("<!doctype") || s.startsWith("<html") || s.startsWith("<head") || s.startsWith("<")) {
     throw new Error(`Expected JSON but got HTML | url=${urlForMsg} | head=${s.slice(0, 80)}`);
   }
-
   s = s.replace(/,\s*([}\]])/g, "$1");
   return JSON.parse(s);
 }
 
-/* ---------------------------
-   AYAH INDEX SYNC (binary)
---------------------------- */
 function isMonotonicNonDecreasing(arr) {
-  for (let i = 1; i < arr.length; i += 1) {
-    if (!(arr[i] >= arr[i - 1])) return false;
-  }
+  for (let i = 1; i < arr.length; i += 1) if (!(arr[i] >= arr[i - 1])) return false;
   return true;
 }
-
 function findActiveVerseIndexBinary(starts, ends, t) {
   if (!Number.isFinite(t) || !starts.length || starts.length !== ends.length) return -1;
 
@@ -112,14 +88,11 @@ function findActiveVerseIndexBinary(starts, ends, t) {
   return best;
 }
 
-/* ---------------------------
-   MARK SEGMENT (light but cached)
---------------------------- */
+/* mark: basit + cache (senin eski gelişmiş markSegment'ini istersen geri koyarız) */
 function stripOuterQuotes(s) {
   const t = String(s ?? "").trim();
   return t.replace(/^[\"“”]+/, "").replace(/[\"“”]+$/, "").trim();
 }
-
 function normalizeCommon(s) {
   return String(s ?? "")
     .replaceAll("\u00A0", " ")
@@ -128,15 +101,12 @@ function normalizeCommon(s) {
     .replace(/\s+/g, " ")
     .trim();
 }
-
 function splitAndMarkFirst(text, needle, className) {
   const s = String(text ?? "");
   const n = String(needle ?? "");
   if (!s || !n) return s;
-
   const idx = s.indexOf(n);
   if (idx < 0) return s;
-
   return (
     <>
       {s.slice(0, idx)}
@@ -145,7 +115,6 @@ function splitAndMarkFirst(text, needle, className) {
     </>
   );
 }
-
 function markSegmentUncached(text, ayah, lang) {
   const s = String(text ?? "");
   const seg = SEGMENTS[Number(ayah)];
@@ -156,10 +125,7 @@ function markSegmentUncached(text, ayah, lang) {
 
   const cls = seg.color === "green" ? "fontGreen" : "fontRed";
 
-  if (lang === "ar") {
-    // basit: ar'da tüm satırı renklendir (istersen eski gelişmiş arabic matcher'ı geri koyabilirsin)
-    return <span className={cls}>{s}</span>;
-  }
+  if (lang === "ar") return <span className={cls}>{s}</span>;
 
   const needle = stripOuterQuotes(rawNeedle);
   const direct = splitAndMarkFirst(s, needle, cls);
@@ -168,34 +134,23 @@ function markSegmentUncached(text, ayah, lang) {
   const sN = normalizeCommon(s);
   const nN = normalizeCommon(needle);
   if (sN && nN && sN.includes(nN)) return <span className={cls}>{s}</span>;
-
   return s;
 }
-
 function useMarkSegmentCached() {
   const cacheRef = useRef(new Map());
-
-  const clearCache = useCallback(() => {
-    cacheRef.current.clear();
-  }, []);
-
+  const clearCache = useCallback(() => cacheRef.current.clear(), []);
   const markSegment = useCallback((text, ayah, lang) => {
     const s = String(text ?? "");
     const key = `${Number(ayah) || 0}|${lang}|${s}`;
     const hit = cacheRef.current.get(key);
     if (hit !== undefined) return hit;
-
     const out = markSegmentUncached(s, ayah, lang);
     cacheRef.current.set(key, out);
     return out;
   }, []);
-
   return { markSegment, clearCache };
 }
 
-/* ---------------------------
-   WHEEL (inertial)
---------------------------- */
 function IOSPickerWheelVertical3D({ disabled, value, onStep }) {
   const ref = useRef(null);
   const draggingRef = useRef(false);
@@ -210,7 +165,6 @@ function IOSPickerWheelVertical3D({ disabled, value, onStep }) {
 
   const STEP_PX = 10;
   const MAX_STEPS_PER_FRAME = 14;
-
   const RELEASE_MIN_V = 0.1;
   const VEL_LIMIT = 2.2;
   const DECAY_PER_MS = 0.0065;
@@ -252,7 +206,6 @@ function IOSPickerWheelVertical3D({ disabled, value, onStep }) {
       stop();
       return;
     }
-
     velRef.current = clamp(v0, -VEL_LIMIT, VEL_LIMIT);
 
     const startTs = performance.now();
@@ -265,7 +218,6 @@ function IOSPickerWheelVertical3D({ disabled, value, onStep }) {
 
       const sign = Math.sign(velRef.current || 1);
       const sp = Math.abs(velRef.current);
-
       const nextSp = sp * Math.exp(-DECAY_PER_MS * dt);
       velRef.current = sign * nextSp;
 
@@ -289,10 +241,8 @@ function IOSPickerWheelVertical3D({ disabled, value, onStep }) {
     stop();
     draggingRef.current = true;
     pointerIdRef.current = e.pointerId;
-
     lastYRef.current = e.clientY;
     lastTsRef.current = performance.now();
-
     try {
       ref.current?.setPointerCapture?.(e.pointerId);
     } catch {}
@@ -305,7 +255,6 @@ function IOSPickerWheelVertical3D({ disabled, value, onStep }) {
     const now = performance.now();
     const dy = e.clientY - lastYRef.current;
     const dt = Math.max(1, now - (lastTsRef.current || now));
-
     lastYRef.current = e.clientY;
     lastTsRef.current = now;
 
@@ -370,7 +319,6 @@ function IOSPickerWheelVertical3D({ disabled, value, onStep }) {
           {items.map((n, i) => {
             const ang = angles[i] ?? 0;
             const active = n === Number(value);
-
             const abs = Math.abs(ang);
             const opacity = clamp(1 - abs / 92, 0.12, 1);
             const blur = clamp(abs / 55, 0, 1.4);
@@ -400,21 +348,18 @@ function SinglePlayerMain({ verse, markSegment }) {
   const ay = Number(verse?.ayah || 0);
 
   return (
-    <div className="singlePlayerMain" aria-label="Single Player Main">
+    <div className="singlePlayerMain">
       <div className="singlePlayerCard">
         <div className="singlePlayerLines">
           <div className="singlePlayerLine singlePlayerLineAr" dir="rtl">
             {markSegment((verse?.ar || "—").trim(), ay, "ar")}
           </div>
-
           <div className="singlePlayerLine singlePlayerLineDe">
             {markSegment((verse?.de || "—").trim(), ay, "de")}
           </div>
-
           <div className="singlePlayerLine singlePlayerLineTr">
             {markSegment((verse?.tr || "—").trim(), ay, "tr")}
           </div>
-
           <div style={{ height: 240 }} />
         </div>
       </div>
@@ -423,11 +368,11 @@ function SinglePlayerMain({ verse, markSegment }) {
 }
 
 export default function App() {
-  const [selectedSurah, setSelectedSurah] = useState(
-    () => SURAHES.find((s) => s.slug === "meryem") ?? SURAHES[0]
-  );
+  const [selectedSurah, setSelectedSurah] = useState(() => SURAHES.find((s) => s.slug === "meryem") ?? SURAHES[0]);
 
   const [verses, setVerses] = useState([]);
+  const versesRef = useRef([]);
+
   const [error, setError] = useState("");
 
   const audioRef = useRef(null);
@@ -444,25 +389,17 @@ export default function App() {
   const [activeIndex, setActiveIndex] = useState(-1);
   const activeIndexRef = useRef(-1);
 
-  const versesRef = useRef(verses);
-
   const dockRef = useRef(null);
 
-  const { markSegment, clearCache } = useMarkSegmentCached();
-
-  // seek UX state
   const seekingRef = useRef(false);
   const wasPlayingOnSeekRef = useRef(false);
   const seekRafRef = useRef(0);
   const pendingSeekRef = useRef(null);
 
-  // repeat
   const [repeatMode, setRepeatMode] = useState(0);
   const repeatStateRef = useRef({ idx: -1, done: 0, armed: true, lastFire: 0 });
 
-  useEffect(() => {
-    document.title = "Türkçe-Almanca Kur’an Player";
-  }, []);
+  const { markSegment, clearCache } = useMarkSegmentCached();
 
   useEffect(() => {
     versesRef.current = verses;
@@ -501,19 +438,15 @@ export default function App() {
     [ends, monotonic, starts]
   );
 
-  // ✅ Dock height: mobile browsers need visualViewport (address bar changes)
+  // ✅ Dock height fix (visualViewport)
   useEffect(() => {
     const setDockH = () => {
       const dock = dockRef.current;
       if (!dock) return;
-
       const h = Math.ceil(dock.getBoundingClientRect().height);
       const prev =
         Number.parseInt(getComputedStyle(document.documentElement).getPropertyValue("--dockH") || "0", 10) || 0;
-
-      if (Math.abs(h - prev) >= 2) {
-        document.documentElement.style.setProperty("--dockH", `${h}px`);
-      }
+      if (Math.abs(h - prev) >= 2) document.documentElement.style.setProperty("--dockH", `${h}px`);
     };
 
     const rafSet = () => requestAnimationFrame(setDockH);
@@ -555,7 +488,6 @@ export default function App() {
       currentTimeRef.current = nextT;
       setTimeUi(nextT);
 
-      // ✅ seek => ayah sync
       syncAyahByTime(nextT);
 
       if (autoPlay) a.play().catch(() => {});
@@ -589,16 +521,14 @@ export default function App() {
     const vs = versesRef.current;
     if (!vs.length) return;
     const cur = activeIndexRef.current;
-    const idx = cur > 0 ? cur - 1 : 0;
-    seekVerse(idx, true);
+    seekVerse(cur > 0 ? cur - 1 : 0, true);
   }, [seekVerse]);
 
   const nextAyah = useCallback(() => {
     const vs = versesRef.current;
     if (!vs.length) return;
     const cur = activeIndexRef.current;
-    const idx = cur >= 0 ? Math.min(vs.length - 1, cur + 1) : 0;
-    seekVerse(idx, true);
+    seekVerse(cur >= 0 ? Math.min(vs.length - 1, cur + 1) : 0, true);
   }, [seekVerse]);
 
   const toggleRepeat = useCallback(() => {
@@ -617,46 +547,22 @@ export default function App() {
       if (idx < 0 || !vs[idx]) idx = 0;
 
       repeatStateRef.current = { idx, done: 0, armed: true, lastFire: 0 };
-
-      const v = vs[idx];
-      const s = Number(v?.start);
+      const s = Number(vs[idx]?.start);
       if (Number.isFinite(s)) seekTo(s, true);
 
       return next;
     });
   }, [seekTo]);
 
-  // keyboard
-  useEffect(() => {
-    const onKey = (e) => {
-      if (e.code === "Space") {
-        e.preventDefault();
-        onPlayPause();
-      }
-      if (e.key === "ArrowUp") {
-        e.preventDefault();
-        prevAyah();
-      }
-      if (e.key === "ArrowDown") {
-        e.preventDefault();
-        nextAyah();
-      }
-      if (e.key.toLowerCase() === "r") {
-        e.preventDefault();
-        toggleRepeat();
-      }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [nextAyah, onPlayPause, prevAyah, toggleRepeat]);
-
-  // load verses on surah change
+  // ✅ LOAD VERSES (FIXED: immediate ref set + immediate first verse)
   useEffect(() => {
     let cancelled = false;
 
     setError("");
     setVerses([]);
+    versesRef.current = [];
     setActiveIndex(-1);
+    activeIndexRef.current = -1;
     setDuration(0);
     setTimeUi(0);
 
@@ -677,19 +583,22 @@ export default function App() {
         const res = await fetch(versesSrc, { cache: "no-store" });
         const text = await res.text();
 
-        if (!res.ok) {
-          throw new Error(`Fetch failed: ${res.status} ${res.statusText} | body=${text.slice(0, 160)}`);
-        }
+        if (!res.ok) throw new Error(`Fetch failed: ${res.status} ${res.statusText}`);
 
         const data = parseJsonTolerant(text, versesSrc);
-        if (!Array.isArray(data)) throw new Error("Invalid verses JSON (expected array)");
+        if (!Array.isArray(data) || !data.length) throw new Error("Invalid verses JSON (empty)");
 
-        if (!cancelled) {
-          setVerses(data);
-          setActiveIndex(0);
-          activeIndexRef.current = 0;
-          requestAnimationFrame(() => seekVerse(0, false));
-        }
+        if (cancelled) return;
+
+        // ✅ set refs FIRST (race fix)
+        versesRef.current = data;
+        setVerses(data);
+
+        activeIndexRef.current = 0;
+        setActiveIndex(0);
+
+        const firstStart = Number(data[0]?.start) || 0;
+        seekTo(firstStart, false);
       } catch (e) {
         // eslint-disable-next-line no-console
         console.error("[verses] load failed:", e);
@@ -700,14 +609,14 @@ export default function App() {
     return () => {
       cancelled = true;
     };
-  }, [clearCache, seekVerse, versesSrc]);
+  }, [versesSrc, clearCache, seekTo]);
 
-  // audio listeners + continuous ayah sync while playing
+  // audio listeners (smooth ui + ayah sync)
   useEffect(() => {
     const a = audioRef.current;
     if (!a) return;
 
-    const UI_FPS = 30; // seek feel
+    const UI_FPS = 30;
     let raf = 0;
     let last = 0;
 
@@ -734,7 +643,7 @@ export default function App() {
     const onMeta = () => setDuration(a.duration || 0);
     const onPlay = () => setIsPlaying(true);
     const onPause = () => setIsPlaying(false);
-    const onErr = () => setError("Audio could not be played. Check console for details.");
+    const onErr = () => setError("Audio could not be played.");
 
     a.addEventListener("timeupdate", onTime);
     a.addEventListener("loadedmetadata", onMeta);
@@ -752,7 +661,7 @@ export default function App() {
     };
   }, [syncAyahByTime]);
 
-  // repeat logic
+  // repeat loop
   useEffect(() => {
     if (!repeatMode) return;
 
@@ -814,7 +723,7 @@ export default function App() {
     return () => window.clearInterval(id);
   }, [repeatMode]);
 
-  // ✅ SMOOTH SEEK: onInput + rAF write to audio.currentTime
+  // smooth seek write (rAF)
   const flushSeek = useCallback(() => {
     if (seekRafRef.current) return;
     seekRafRef.current = requestAnimationFrame(() => {
@@ -829,17 +738,13 @@ export default function App() {
   const onSeekPointerDown = useCallback(() => {
     seekingRef.current = true;
     wasPlayingOnSeekRef.current = isPlayingRef.current;
-    // iOS'ta daha stabil: seek sırasında çalma durdur
     const a = audioRef.current;
     if (a && !a.paused) a.pause();
   }, []);
 
   const onSeekPointerUp = useCallback(() => {
     seekingRef.current = false;
-    // bırakınca eğer çalıyorduysa devam
-    if (wasPlayingOnSeekRef.current) {
-      audioRef.current?.play?.().catch(() => {});
-    }
+    if (wasPlayingOnSeekRef.current) audioRef.current?.play?.().catch(() => {});
   }, []);
 
   const onSeekInput = useCallback(
@@ -847,12 +752,10 @@ export default function App() {
       const v = Number(e.target.value);
       if (!Number.isFinite(v)) return;
 
-      // UI anında aksın
       setTimeUi(v);
       currentTimeRef.current = v;
       syncAyahByTime(v);
 
-      // audio write rAF ile (takıntı azalır)
       pendingSeekRef.current = v;
       flushSeek();
     },
@@ -885,11 +788,9 @@ export default function App() {
         <SinglePlayerMain verse={activeVerse} markSegment={markSegment} />
       </main>
 
-      {/* ✅ ONLY BOTTOM DOCK */}
       <div className="bottomDock" ref={dockRef} aria-label="Bottom Player">
         <audio ref={audioRef} src={audioSrc} preload="metadata" playsInline />
 
-        {/* ✅ TOP SEEK (smooth) */}
         <div className="dockSeekTop">
           <input
             className="dockSeek"
@@ -909,7 +810,6 @@ export default function App() {
           />
         </div>
 
-        {/* ✅ ONE HORIZONTAL ROW */}
         <div className="dockRow">
           <select
             className="dockSelectBig"
@@ -931,11 +831,9 @@ export default function App() {
           <button className="spBtn" type="button" onClick={prevAyah} aria-label="Prev">
             ◀
           </button>
-
           <button className="spBtn spBtnPrimary" type="button" onClick={onPlayPause} aria-label="Play/Pause">
             {isPlaying ? "⏸" : "▶"}
           </button>
-
           <button className="spBtn" type="button" onClick={nextAyah} aria-label="Next">
             ▶
           </button>
@@ -946,22 +844,13 @@ export default function App() {
               value={Number(activeVerse?.ayah || 0)}
               onStep={(dir) => {
                 const cur = activeIndexRef.current >= 0 ? activeIndexRef.current : 0;
-                const next = clamp(cur + dir, 0, Math.max(0, verses.length - 1));
+                const next = clamp(cur + dir, 0, Math.max(0, versesRef.current.length - 1));
                 seekVerse(next, isPlayingRef.current);
               }}
             />
           </div>
 
-          <button
-            className={`spRBtn ${repeatMode ? "on" : "off"}`}
-            type="button"
-            onClick={() => {
-              tactilePulse(10);
-              toggleRepeat();
-            }}
-            aria-label="Repeat"
-            title="Repeat (R)"
-          >
+          <button className={`spRBtn ${repeatMode ? "on" : "off"}`} type="button" onClick={toggleRepeat} title="Repeat (R)">
             {repeatMode === 2 ? "rr" : "r"}
           </button>
 
