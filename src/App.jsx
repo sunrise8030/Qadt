@@ -15,6 +15,16 @@ const SURAHES = [
     audioUrl: "/audio/yusuf.mp3",
     versesUrl: "/data/yusuf.json",
   },
+  {
+  id: 19,
+  slug: "maryam",
+  nameAr: "مريم",
+  nameTr: "Meryem",
+  nameDe: "Maryam",
+  ayahCount: 98,
+  audioUrl: "/audio/maryam.mp3",
+  versesUrl: "/data/maryam.json",
+},
 ];
 
 /**
