@@ -579,3 +579,47 @@ html,body{
   opacity: 0 !important;
 }
 .isSafari .row:hover{ filter:none !important; }
+
+/* =========================
+   FIX: iOS Chrome small screens (dock looks "desktop/dev")
+   ========================= */
+
+@media (max-width: 520px){
+  .singlePlayerDockBottom{
+    left: 14px !important;
+    right: 14px !important;
+    width: auto !important;
+    max-width: none !important;
+  }
+
+  .spBtn{
+    min-width: 56px;
+    height: 56px;
+    font-size: 22px;
+    border-radius: 16px;
+  }
+
+  .spBtnPrimary{
+    min-width: 98px;
+    height: 62px;
+    font-size: 26px;
+    border-radius: 18px;
+  }
+
+  .spPicker3D{
+    width: 104px;
+    height: 140px;
+    border-radius: 16px;
+  }
+
+  .spPickerItem3D{
+    font-size: 30px;
+  }
+
+  .spRBtn{
+    min-width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    font-size: 16px;
+  }
+}
