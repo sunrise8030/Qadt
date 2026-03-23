@@ -1,5 +1,5 @@
 // =========================
-// FILE: src/App.jsx (FULL - SINGLE MAIN + NO TABLE + SURAH SELECT + INERTIAL WHEEL)
+// FILE: src/App.jsx (FULL - SINGLE PLAYER AS MAIN + NO TABLE + NO AYAH DIAL)
 // =========================
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import "./styles.css";
@@ -116,7 +116,7 @@ const SEGMENTS = {
   98: { color: "green", ar: "إِنَّهُۥ هُوَ ٱلْغَفُورُ ٱلرَّحِيمُ", de: "Er ist ja der Allvergebende und Barmherzige.", tr: "“Hiç şüphesiz O, Ğafûr (günahları çok bağışlayan)dır; Rahîm (bilhassa tevbe ile Kendisine yönelen mü’ min kullarına karşı hususî rahmeti pek bol olan)dır.”" },
   100: { color: "green", ar: "إِنَّ رَبِّى لَطِيفٌۭ لِّمَا يَشَآءُ ۚ إِنَّهُۥ هُوَ ٱلْعَلِيمُ ٱلْحَكِيمُ", de: "Gewiß, mein Herr ist feinfühlig (in der Durchführung dessen), was Er will. Er ist ja der Allwissende und Allweise.", tr: "“Gerçekten Rabbim, her ne dilerse onu pek güzel şekilde ve insanların göremeyeceği bir incelik içinde yerine getirir. Şüphesiz O, evet O, Alîm (her şeyi hakkıyla bilen)dir; Hakîm (bütün hüküm ve icraatında pek çok hikmetler bulunan)dır.”" },
   101: { color: "red", ar: "تَوَفَّنِى مُسْلِمًۭا وَأَلْحِقْنِى بِٱلصَّٰلِحِينَ", de: "Berufe mich als (Dir) ergeben ab und nimm mich unter die Rechtschaffenen auf.", tr: "“Beni Müslüman olarak vefat ettir ve beni salihler içine kat!”" },
-  108: { color: "green", ar: "قُلْ هَٰذِهِۦ سَبِيلِىٓ أَدْعُوٓا۟ إِلَى ٱللَّهِ ۚ عَلَىٰ بَصِيرَةٍ أَنَا۠ وَمَنِ ٱتَّبَعَنِى ۖ وَسُبْحَٰنَ ٱللهِ وَمَآ أَنَا۠ مِنَ ٱلْمُشْرِكِينَ", de: "Sag: Das ist mein Weg: Ich rufe zu Allah aufgrund eines sichtbaren Hinweises, ich und diejenigen, die mir folgen. Preis sei Allah! Und ich gehöre nicht zu den Götzendienern.", tr: "“İşte benim (iman, ihlâs ve Tevhid) yolum: Ben, (körü körüne ve taklide dayalı olarak değil,) görerek, delile dayanarak ve insanların idrakine hitap ederek Allah’a çağırıyorum: ben ve bana tâbi olanlar. Ve Allah’ı şirkin her türlüsünden tenzih ederim, asla O’na ortak tanıyanlardan değilim ben.”" },
+  108: { color: "green", ar: "قُلْ هَٰذِهِۦ سَبِيلِىٓ أَدْعُوٓا۟ إِلَى ٱللَّهِ ۚ عَلَىٰ بَصِيرَةٍ أَنَا۠ وَمَنِ ٱتَّبَعَنِى ۖ وَسُبْحَٰنَ ٱللَّهِ وَمَآ أَنَا۠ مِنَ ٱلْمُشْرِكِينَ", de: "Sag: Das ist mein Weg: Ich rufe zu Allah aufgrund eines sichtbaren Hinweises, ich und diejenigen, die mir folgen. Preis sei Allah! Und ich gehöre nicht zu den Götzendienern.", tr: "“İşte benim (iman, ihlâs ve Tevhid) yolum: Ben, (körü körüne ve taklide dayalı olarak değil,) görerek, delile dayanarak ve insanların idrakine hitap ederek Allah’a çağırıyorum: ben ve bana tâbi olanlar. Ve Allah’ı şirkin her türlüsünden tenzih ederim, asla O’na ortak tanıyanlardan değilim ben.”" },
 };
 
 function resolvePublicUrl(path) {
@@ -138,11 +138,29 @@ function tactilePulse(ms = 8) {
   } catch {}
 }
 
-function formatTime(sec) {
-  const s = Math.max(0, Number(sec) || 0);
-  const m = Math.floor(s / 60);
-  const r = Math.floor(s % 60);
-  return `${String(m).padStart(2, "0")}:${String(r).padStart(2, "0")}`;
+function getStickyOverlayTopPx() {
+  const el = document.querySelector(".playerSticky");
+  if (!el) return null;
+  const r = el.getBoundingClientRect();
+  if (r.height <= 0) return null;
+  if (r.bottom <= 0 || r.top >= window.innerHeight) return null;
+  return r.top;
+}
+
+function ensureRowVisible(el, padding = 10) {
+  if (!el) return;
+  const r = el.getBoundingClientRect();
+  const overlayTop = getStickyOverlayTopPx();
+
+  const viewportTop = padding;
+  const viewportBottom = window.innerHeight - padding;
+  const effectiveBottom =
+    overlayTop != null ? Math.min(viewportBottom, overlayTop - padding) : viewportBottom;
+
+  const above = r.top < viewportTop;
+  const below = r.bottom > effectiveBottom;
+
+  if (above || below) el.scrollIntoView({ behavior: "smooth", block: "nearest" });
 }
 
 function parseJsonTolerant(text, urlForMsg = "") {
@@ -175,6 +193,40 @@ function normalizeCommon(s) {
     .replace(/[‘’]/g, "'")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+function escapeRegexLiteral(s) {
+  return String(s).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function normalizeArabicSnippet(snippet) {
+  return String(snippet || "")
+    .replace(/[\u064B-\u065F\u0670\u06D6-\u06ED]/g, "")
+    .replace(/\u0640/g, "")
+    .trim();
+}
+
+function buildArabicLooseRegex(snippet) {
+  const base = normalizeArabicSnippet(snippet);
+  if (!base) return null;
+
+  const DIACR = "[\\u064B-\\u065F\\u0670\\u06D6-\\u06ED]*";
+  const TAT = "\\u0640*";
+  const WS = "\\s*";
+
+  const chars = Array.from(base);
+  const parts = [];
+
+  for (const ch of chars) {
+    if (/\s/.test(ch)) {
+      parts.push(WS);
+      continue;
+    }
+    const esc = escapeRegexLiteral(ch);
+    parts.push(`${TAT}${esc}${DIACR}`);
+  }
+
+  return new RegExp(parts.join(""), "g");
 }
 
 function isArabicIgnorable(ch) {
@@ -264,6 +316,27 @@ function markArabicByNormalizedMapping(text, snippet, className) {
   );
 }
 
+function applyRegexMarkFirst(text, regex, className) {
+  const s = String(text ?? "");
+  if (!s || !regex) return s;
+
+  regex.lastIndex = 0;
+  const m = regex.exec(s);
+  if (!m) return s;
+
+  const start = m.index;
+  const matchText = m[0] ?? "";
+  const end = start + matchText.length;
+
+  return (
+    <>
+      {s.slice(0, start)}
+      <span className={className}>{matchText}</span>
+      {s.slice(end)}
+    </>
+  );
+}
+
 function splitAndMarkFirst(text, needle, className) {
   const s = String(text ?? "");
   const n = String(needle ?? "");
@@ -295,7 +368,8 @@ function markSegmentUncached(text, ayah, lang) {
     const cls = color === "green" ? "mark markGreen" : "mark markRed";
     const mapped = markArabicByNormalizedMapping(s, rawNeedle, cls);
     if (mapped) return mapped;
-    return s;
+    const rx = buildArabicLooseRegex(rawNeedle);
+    return applyRegexMarkFirst(s, rx, cls);
   }
 
   const cls = color === "green" ? "fontGreen" : "fontRed";
@@ -333,262 +407,93 @@ function useMarkSegmentCached() {
   return { markSegment, clearCache: clear };
 }
 
-/**
- * Inertial wheel (non-linear):
- * - drag -> velocity
- * - inertia with exponential decay
- * - non-linear accel based on speed (pow)
- */
-function IOSPickerWheelVertical3D({ disabled, value, onStep }) {
-  const ref = useRef(null);
-  const draggingRef = useRef(false);
-  const pointerIdRef = useRef(null);
-
-  const lastYRef = useRef(0);
-  const lastTsRef = useRef(0);
-
-  const velRef = useRef(0); // px/ms
-  const accumPxRef = useRef(0);
-  const rafRef = useRef(0);
-  const lastVibeRef = useRef(0);
-
-  const STEP_PX = 10;
-  const MAX_STEPS_PER_FRAME = 14;
-
-  const RELEASE_MIN_V = 0.10;
-  const VEL_LIMIT = 2.2;
-  const DECAY_PER_MS = 0.0065; // smaller => longer glide
-  const STOP_V = 0.05;
-  const MAX_MS = 900;
-
+function SinglePlayerMain({
+  verse,
+  isPlaying,
+  onPlayPause,
+  onPrev,
+  onNext,
+  repeatMode,
+  onToggleRepeat,
+  markSegment,
+}) {
   useEffect(() => {
-    return () => {
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
-      rafRef.current = 0;
-    };
-  }, []);
-
-  const stop = () => {
-    if (rafRef.current) cancelAnimationFrame(rafRef.current);
-    rafRef.current = 0;
-    velRef.current = 0;
-    accumPxRef.current = 0;
-  };
-
-  const vibe = (ms = 6) => {
-    const now = performance.now();
-    if (now - (lastVibeRef.current || 0) < 55) return;
-    lastVibeRef.current = now;
-    tactilePulse(ms);
-  };
-
-  const tickSteps = () => {
-    let did = false;
-    let steps = 0;
-
-    while (accumPxRef.current <= -STEP_PX && steps < MAX_STEPS_PER_FRAME) {
-      onStep(+1);
-      accumPxRef.current += STEP_PX;
-      did = true;
-      steps += 1;
-    }
-
-    while (accumPxRef.current >= STEP_PX && steps < MAX_STEPS_PER_FRAME) {
-      onStep(-1);
-      accumPxRef.current -= STEP_PX;
-      did = true;
-      steps += 1;
-    }
-
-    if (did) vibe(6);
-  };
-
-  const startInertia = () => {
-    const v0 = velRef.current;
-    if (!Number.isFinite(v0) || Math.abs(v0) < RELEASE_MIN_V) {
-      stop();
-      return;
-    }
-
-    velRef.current = clamp(v0, -VEL_LIMIT, VEL_LIMIT);
-
-    const startTs = performance.now();
-    let last = startTs;
-
-    const frame = () => {
-      const now = performance.now();
-      const dt = Math.max(1, now - last);
-      last = now;
-
-      const sign = Math.sign(velRef.current || 1);
-      const sp = Math.abs(velRef.current);
-
-      // exponential decay (non-linear feel)
-      const nextSp = sp * Math.exp(-DECAY_PER_MS * dt);
-      velRef.current = sign * nextSp;
-
-      // non-linear: faster speed gets more travel
-      const boost = clamp(1 + Math.pow(nextSp / 1.2, 1.25) * 0.35, 1, 2.2);
-
-      accumPxRef.current += velRef.current * dt * boost;
-      tickSteps();
-
-      if (nextSp < STOP_V || now - startTs > MAX_MS) {
-        stop();
-        return;
+    const onKey = (e) => {
+      if (e.code === "Space") {
+        e.preventDefault();
+        onPlayPause();
       }
-      rafRef.current = requestAnimationFrame(frame);
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        onPrev();
+      }
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        onNext();
+      }
+      if (e.key.toLowerCase() === "r") {
+        e.preventDefault();
+        onToggleRepeat();
+      }
     };
 
-    rafRef.current = requestAnimationFrame(frame);
-  };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onPlayPause, onPrev, onNext, onToggleRepeat]);
 
-  const releaseCapture = (node, pointerId) => {
-    try {
-      if (node && pointerId != null && typeof node.releasePointerCapture === "function") {
-        node.releasePointerCapture(pointerId);
-      }
-    } catch {}
-  };
-
-  const onPointerDown = (e) => {
-    if (disabled) return;
-    stop();
-    draggingRef.current = true;
-    pointerIdRef.current = e.pointerId;
-
-    lastYRef.current = e.clientY;
-    lastTsRef.current = performance.now();
-
-    try {
-      ref.current?.setPointerCapture?.(e.pointerId);
-    } catch {}
-  };
-
-  const onPointerMove = (e) => {
-    if (disabled || !draggingRef.current) return;
-    if (pointerIdRef.current != null && e.pointerId !== pointerIdRef.current) return;
-
-    const now = performance.now();
-    const dy = e.clientY - lastYRef.current;
-    const dt = Math.max(1, now - (lastTsRef.current || now));
-
-    lastYRef.current = e.clientY;
-    lastTsRef.current = now;
-
-    const v = dy / dt;
-
-    // smooth velocity
-    velRef.current = velRef.current * 0.62 + v * 0.38;
-
-    const speed = Math.abs(velRef.current);
-    const accel = clamp(1 + Math.pow(speed / 0.9, 1.20) * 0.55, 1, 2.8);
-
-    accumPxRef.current += dy * accel;
-    tickSteps();
-  };
-
-  const onPointerUp = (e) => {
-    draggingRef.current = false;
-    releaseCapture(ref.current, pointerIdRef.current);
-    pointerIdRef.current = null;
-
-    startInertia();
-  };
-
-  const onWheel = (e) => {
-    if (disabled) return;
-    e.preventDefault();
-    e.stopPropagation();
-
-    stop();
-
-    const dy = e.deltaY;
-    const dir = dy < 0 ? +1 : -1;
-
-    const raw = Math.abs(dy);
-    const steps = clamp(Math.round(Math.pow(raw / 18, 1.05)), 1, 22);
-
-    for (let i = 0; i < steps; i += 1) onStep(dir);
-    vibe(7);
-
-    velRef.current = clamp((dy / 520) * -1, -VEL_LIMIT, VEL_LIMIT);
-    startInertia();
-  };
-
-  const items = useMemo(() => {
-    const v = Number(value) || 0;
-    return [v - 3, v - 2, v - 1, v, v + 1, v + 2, v + 3];
-  }, [value]);
-
-  const angles = [-82, -54, -28, 0, 28, 54, 82];
-  const radius = 90;
+  const ay = Number(verse?.ayah || 0);
 
   return (
-    <div className={`spPicker3D ${disabled ? "disabled" : ""}`}>
-      <div
-        ref={ref}
-        className="spPickerViewport"
-        role="slider"
-        aria-label="Ayet çarkı"
-        tabIndex={disabled ? -1 : 0}
-        style={{ touchAction: "none" }}
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
-        onPointerCancel={onPointerUp}
-        onWheel={onWheel}
-      >
-        <div className="spPickerItems3D">
-          {items.map((n, i) => {
-            const ang = angles[i] ?? 0;
-            const active = n === Number(value);
+    <div className="singlePlayerMain" aria-label="Single Player Main">
+      <div className="singlePlayerCard">
+        <div className="singlePlayerLines">
+          <div className="singlePlayerLine singlePlayerLineAr" dir="rtl">
+            {markSegment((verse?.ar || "—").trim(), ay, "ar")}
+          </div>
 
-            const abs = Math.abs(ang);
-            const opacity = clamp(1 - abs / 92, 0.12, 1);
-            const blur = clamp(abs / 55, 0, 1.4);
-            const scale = clamp(1 - abs / 220, 0.86, 1);
+          <div className="singlePlayerLine singlePlayerLineDe">
+            {markSegment((verse?.de || "—").trim(), ay, "de")}
+          </div>
 
-            return (
-              <div
-                key={n}
-                className={`spPickerItem3D ${active ? "active" : ""}`}
-                style={{
-                  opacity,
-                  filter: `blur(${blur}px)`,
-                  transform: `rotateX(${ang}deg) translateZ(${radius}px) scale(${scale})`,
-                }}
-              >
-                {n <= 0 ? "—" : String(n).padStart(2, "0")}
-              </div>
-            );
-          })}
+          <div className="singlePlayerLine singlePlayerLineTr">
+            {markSegment((verse?.tr || "—").trim(), ay, "tr")}
+          </div>
+
+          <div style={{ height: 140 }} />
+        </div>
+      </div>
+
+      <div className="singlePlayerDockBottom" aria-label="Player Dock">
+        <div className="singlePlayerDockRow">
+          <button className="spBtn" type="button" onClick={onPrev} aria-label="Prev">
+            ◀
+          </button>
+
+          <button className="spBtn spBtnPrimary" type="button" onClick={onPlayPause} aria-label="Play/Pause">
+            {isPlaying ? "⏸" : "▶"}
+          </button>
+
+          <button className="spBtn" type="button" onClick={onNext} aria-label="Next">
+            ▶
+          </button>
+
+          <button
+            className={`spRBtn ${repeatMode ? "on" : "off"}`}
+            type="button"
+            onClick={() => {
+              tactilePulse(10);
+              onToggleRepeat();
+            }}
+            aria-label="Repeat"
+            title="Repeat (R)"
+          >
+            {repeatMode === 2 ? "rr" : "r"}
+          </button>
         </div>
       </div>
     </div>
   );
 }
-
-const VerseCard = React.memo(function VerseCard({ verse, active, onClick, markSegment }) {
-  const ay = Number(verse?.ayah || 0);
-  const arText = (verse?.ar || "—").trim();
-  const deText = (verse?.de || "—").replace(/\s*\n+\s*/g, " ").trim();
-  const trText = (verse?.tr || "—").replace(/\s*\n+\s*/g, " ").trim();
-
-  return (
-    <button type="button" className={`verseCard ${active ? "active" : ""}`} onClick={onClick}>
-      <div className="verseMeta">
-        <span className="badge">Ayet: {verse?.ayah ?? "—"}</span>
-      </div>
-
-      <div className="verseAr" dir="rtl">
-        {markSegment(arText, ay, "ar")}
-      </div>
-      <div className="verseDe">{markSegment(deText, ay, "de")}</div>
-      <div className="verseTr">{markSegment(trText, ay, "tr")}</div>
-    </button>
-  );
-});
 
 export default function App() {
   const [selectedSurah, setSelectedSurah] = useState(
@@ -599,16 +504,27 @@ export default function App() {
   const [error, setError] = useState("");
 
   const audioRef = useRef(null);
+
   const [isPlaying, setIsPlaying] = useState(false);
   const [duration, setDuration] = useState(0);
 
   const [activeIndex, setActiveIndex] = useState(-1);
-  const activeIndexRef = useRef(-1);
 
+  const [repeatMode, setRepeatMode] = useState(0);
+  const repeatStateRef = useRef({ idx: -1, done: 0, armed: true, lastFire: 0 });
+
+  const versesRef = useRef(verses);
+  const activeIndexRef = useRef(activeIndex);
+  const durationRef = useRef(duration);
+  const isPlayingRef = useRef(isPlaying);
   const currentTimeRef = useRef(0);
-  const [timeTick, setTimeTick] = useState(0);
 
-  const verseRefs = useRef([]);
+  const [tick, setTick] = useState(0);
+  const rafRef = useRef(0);
+  const lastUiTsRef = useRef(0);
+  const UI_FPS = 12;
+
+  const rowRef = useRef(null); // single "current verse card" anchor
   const { markSegment, clearCache } = useMarkSegmentCached();
 
   useEffect(() => {
@@ -616,8 +532,19 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    try {
+      const ua = navigator.userAgent || "";
+      const isSafari = /safari/i.test(ua) && !/chrome|crios|chromium|android/i.test(ua);
+      document.documentElement.classList.toggle("isSafari", isSafari);
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    versesRef.current = verses;
     activeIndexRef.current = activeIndex;
-  }, [activeIndex]);
+    durationRef.current = duration;
+    isPlayingRef.current = isPlaying;
+  }, [verses, activeIndex, duration, isPlaying]);
 
   const audioSrc = useMemo(
     () => (selectedSurah ? resolvePublicUrl(selectedSurah.audioUrl) : ""),
@@ -628,45 +555,17 @@ export default function App() {
     [selectedSurah]
   );
 
-  const seekTo = useCallback((t, autoPlay = false) => {
-    const a = audioRef.current;
-    if (!a || !Number.isFinite(t)) return;
-
-    const d = Number.isFinite(a.duration) ? a.duration : duration;
-    const nextT = Number.isFinite(d) && d > 0 ? clamp(t, 0, d - 0.01) : Math.max(0, t);
-
-    a.currentTime = nextT;
-    currentTimeRef.current = nextT;
-
-    if (autoPlay) a.play().catch(() => {});
-  }, [duration]);
-
-  const seekVerse = useCallback(
-    (idx, autoPlay = true) => {
-      const v = verses[idx];
-      if (!v) return;
-      const start = Number(v?.start);
-      if (!Number.isFinite(start)) return;
-
-      setActiveIndex(idx);
-      seekTo(start, autoPlay);
-
-      requestAnimationFrame(() => {
-        const el = verseRefs.current[idx];
-        if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
-      });
-    },
-    [seekTo, verses]
-  );
-
   useEffect(() => {
     let cancelled = false;
 
     setError("");
     setVerses([]);
     setActiveIndex(-1);
+
+    setRepeatMode(0);
+    repeatStateRef.current = { idx: -1, done: 0, armed: true, lastFire: 0 };
+
     clearCache();
-    verseRefs.current = [];
 
     const a = audioRef.current;
     if (a) {
@@ -674,14 +573,16 @@ export default function App() {
       a.currentTime = 0;
     }
     currentTimeRef.current = 0;
-    setDuration(0);
 
     (async () => {
       try {
         const res = await fetch(versesSrc, { cache: "no-store" });
         const text = await res.text();
+
         if (!res.ok) {
-          throw new Error(`Fetch failed: ${res.status} ${res.statusText} | body=${text.slice(0, 160)}`);
+          throw new Error(
+            `Fetch failed: ${res.status} ${res.statusText} | url=${versesSrc} | body=${text.slice(0, 160)}`
+          );
         }
 
         const data = parseJsonTolerant(text, versesSrc);
@@ -689,9 +590,8 @@ export default function App() {
 
         if (!cancelled) {
           setVerses(data);
-          requestAnimationFrame(() => {
-            if (data.length) seekVerse(0, false);
-          });
+          setActiveIndex(0);
+          activeIndexRef.current = 0;
         }
       } catch (e) {
         // eslint-disable-next-line no-console
@@ -703,16 +603,28 @@ export default function App() {
     return () => {
       cancelled = true;
     };
-  }, [versesSrc, clearCache, seekVerse]);
+  }, [versesSrc, clearCache]);
 
   useEffect(() => {
     const a = audioRef.current;
     if (!a) return;
 
+    const scheduleTick = () => {
+      if (rafRef.current) return;
+      rafRef.current = requestAnimationFrame((ts) => {
+        rafRef.current = 0;
+        const minDt = 1000 / UI_FPS;
+        if (ts - (lastUiTsRef.current || 0) < minDt) return;
+        lastUiTsRef.current = ts;
+        setTick((x) => x + 1);
+      });
+    };
+
     const onTime = () => {
       currentTimeRef.current = a.currentTime || 0;
-      setTimeTick((x) => x + 1);
+      scheduleTick();
     };
+
     const onMeta = () => setDuration(a.duration || 0);
     const onPlay = () => setIsPlaying(true);
     const onPause = () => setIsPlaying(false);
@@ -730,8 +642,52 @@ export default function App() {
       a.removeEventListener("play", onPlay);
       a.removeEventListener("pause", onPause);
       a.removeEventListener("error", onErr);
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      rafRef.current = 0;
     };
   }, []);
+
+  const seekTo = useCallback((t, autoPlay = false) => {
+    const a = audioRef.current;
+    if (!a || !Number.isFinite(t)) return;
+
+    const d = Number.isFinite(a.duration) ? a.duration : durationRef.current;
+    const nextT = Number.isFinite(d) && d > 0 ? clamp(t, 0, d - 0.01) : Math.max(0, t);
+
+    a.currentTime = nextT;
+    currentTimeRef.current = nextT;
+
+    if (autoPlay) a.play().catch(() => {});
+  }, []);
+
+  const seekVerse = useCallback(
+    (idx, autoPlay = true) => {
+      const vs = versesRef.current;
+      const v = vs[idx];
+      if (!v) return;
+
+      const start = Number(v.start);
+      if (!Number.isFinite(start)) return;
+
+      repeatStateRef.current = { idx, done: 0, armed: true, lastFire: 0 };
+
+      seekTo(start, autoPlay);
+
+      setActiveIndex(idx);
+      activeIndexRef.current = idx;
+
+      requestAnimationFrame(() => {
+        if (rowRef.current) ensureRowVisible(rowRef.current, 10);
+      });
+    },
+    [seekTo]
+  );
+
+  useEffect(() => {
+    if (!verses.length) return;
+    if (activeIndexRef.current >= 0) return;
+    seekVerse(0, false);
+  }, [verses.length, seekVerse]);
 
   const onPlayPause = useCallback(() => {
     const a = audioRef.current;
@@ -741,144 +697,180 @@ export default function App() {
   }, []);
 
   const prevAyah = useCallback(() => {
-    if (!verses.length) return;
+    const vs = versesRef.current;
+    if (!vs.length) return;
     const cur = activeIndexRef.current;
     const idx = cur > 0 ? cur - 1 : 0;
     seekVerse(idx, true);
-  }, [seekVerse, verses.length]);
+  }, [seekVerse]);
 
   const nextAyah = useCallback(() => {
-    if (!verses.length) return;
+    const vs = versesRef.current;
+    if (!vs.length) return;
     const cur = activeIndexRef.current;
-    const idx = cur >= 0 ? Math.min(verses.length - 1, cur + 1) : 0;
+    const idx = cur >= 0 ? Math.min(vs.length - 1, cur + 1) : 0;
     seekVerse(idx, true);
-  }, [seekVerse, verses.length]);
+  }, [seekVerse]);
 
-  const currentVerse = activeIndex >= 0 ? verses[activeIndex] : null;
+  const toggleRepeat = useCallback(() => {
+    setRepeatMode((m) => {
+      const next = m === 0 ? 1 : m === 1 ? 2 : 0;
 
-  const header = (
-    <div className="topHeader">
-      <div className="topTitle">
-        <div className="titleLine">
-          <span className="titleStrong">
-            #{selectedSurah.id} — {selectedSurah.nameTr}
-          </span>
-          <span className="titleMuted">{selectedSurah.nameDe}</span>
-        </div>
-        <div className="titleAr" dir="rtl">
-          {selectedSurah.nameAr}
-        </div>
+      if (next <= 0) {
+        repeatStateRef.current = { idx: -1, done: 0, armed: true, lastFire: 0 };
+        return next;
+      }
+
+      const vs = versesRef.current;
+      if (!vs.length) return next;
+
+      let idx = activeIndexRef.current;
+      if (idx < 0 || !vs[idx]) idx = 0;
+
+      repeatStateRef.current = { idx, done: 0, armed: true, lastFire: 0 };
+
+      const v = vs[idx];
+      const s = Number(v?.start);
+      if (Number.isFinite(s)) seekTo(s, true);
+
+      return next;
+    });
+  }, [seekTo]);
+
+  useEffect(() => {
+    const a = audioRef.current;
+    if (!a) return;
+    if (!verses.length) return;
+    if (repeatMode <= 0) return;
+
+    let idx = activeIndexRef.current;
+    const t = currentTimeRef.current;
+
+    if (idx < 0 || !verses[idx]) idx = 0;
+
+    const v = verses[idx];
+    const s = Number(v?.start);
+    const e = Number(v?.end);
+    if (!Number.isFinite(s) || !Number.isFinite(e) || e <= s) return;
+
+    const st = repeatStateRef.current;
+
+    if (st.idx !== idx) {
+      repeatStateRef.current = { idx, done: 0, armed: true, lastFire: 0 };
+      return;
+    }
+
+    if (t < e - 0.12) {
+      repeatStateRef.current.armed = true;
+      return;
+    }
+
+    const nearEnd = t >= e - 0.02;
+    if (!nearEnd || !repeatStateRef.current.armed) return;
+
+    const now = performance.now();
+    if (now - (repeatStateRef.current.lastFire || 0) < 350) return;
+    repeatStateRef.current.lastFire = now;
+
+    repeatStateRef.current.armed = false;
+
+    const done = repeatStateRef.current.done || 0;
+    if (done < repeatMode) {
+      repeatStateRef.current.done = done + 1;
+      a.currentTime = s;
+      currentTimeRef.current = s;
+      a.play().catch(() => {});
+      return;
+    }
+
+    repeatStateRef.current.done = 0;
+    a.pause();
+    a.currentTime = s;
+    currentTimeRef.current = s;
+  }, [tick, verses, repeatMode]);
+
+  const activeVerse = useMemo(() => (activeIndex >= 0 ? verses[activeIndex] : null), [activeIndex, verses]);
+
+  const header = selectedSurah ? (
+    <div className="surahHeader">
+      <div className="surahHeaderLeft">
+        <h2 className="surahTitle">
+          #{selectedSurah.id} — {selectedSurah.nameTr}
+        </h2>
+        <div className="surahSub">{selectedSurah.nameDe}</div>
+      </div>
+
+      <div className="surahHeaderRight" dir="rtl">
+        {selectedSurah.nameAr}
+      </div>
+
+      <div className="surahBadges">
+        <span className="badge">Slug: {selectedSurah.slug}</span>
+        <span className="badge">Ayahs: {selectedSurah.ayahCount}</span>
+        <span className="badge">Loaded: {verses.length}</span>
+
+        <span className="badge">
+          Sûre:&nbsp;
+          <select
+            value={selectedSurah.slug}
+            onChange={(e) => {
+              const slug = e.target.value;
+              const next = SURAHES.find((s) => s.slug === slug);
+              if (next) setSelectedSurah(next);
+            }}
+          >
+            {SURAHES.map((s) => (
+              <option key={s.slug} value={s.slug}>
+                {s.id} — {s.nameTr}
+              </option>
+            ))}
+          </select>
+        </span>
       </div>
     </div>
-  );
-
-  const currentTime = currentTimeRef.current;
-  const canSeek = Number.isFinite(duration) && duration > 0;
+  ) : null;
 
   return (
-    <div className="appRoot">
-      <main className="page">
+    <div className="appShell appShellSolo">
+      <main className="content">
         {header}
-
         {error ? <div className="errorBox">{error}</div> : null}
 
-        <div className="playerStickyBar">
-          <div className="playerTopRow">
-            <div className="playerLeft">
-              <span className="pill">PLAYER</span>
-              <span className="pill">
-                Sûre:&nbsp;
-                <select
-                  value={selectedSurah.slug}
-                  onChange={(e) => {
-                    const slug = e.target.value;
-                    const next = SURAHES.find((s) => s.slug === slug);
-                    if (next) setSelectedSurah(next);
-                  }}
-                >
-                  {SURAHES.map((s) => (
-                    <option key={s.slug} value={s.slug}>
-                      {s.id} — {s.nameTr}
-                    </option>
-                  ))}
-                </select>
-              </span>
-
-              <span className="pill mono">
-                Ayet: {currentVerse?.ayah ?? "—"} / {verses.length || "—"}
-              </span>
+        <div className="playerCard playerSticky">
+          <audio ref={audioRef} src={audioSrc} preload="metadata" playsInline />
+          <div className="playerControls">
+            <div className="liveTimeBar">
+              <div className="liveTime">
+                <span className="liveLabel">PLAYER</span>
+              </div>
+              <div className="liveActions">
+                <button className="btnPrimary" type="button" onClick={onPlayPause}>
+                  {isPlaying ? "Pause" : "Play"}
+                </button>
+                <button className="btnSmall" type="button" onClick={prevAyah} title="Prev ayah">
+                  ◀
+                </button>
+                <button className="btnSmall" type="button" onClick={nextAyah} title="Next ayah">
+                  ▶
+                </button>
+              </div>
             </div>
-
-            <div className="playerRight">
-              <button className="btnP" type="button" onClick={prevAyah} aria-label="Prev">
-                ◀
-              </button>
-
-              <button className="btnP btnPPrimary" type="button" onClick={onPlayPause} aria-label="Play/Pause">
-                {isPlaying ? "⏸" : "▶"}
-              </button>
-
-              <button className="btnP" type="button" onClick={nextAyah} aria-label="Next">
-                ▶
-              </button>
-
-              <IOSPickerWheelVertical3D
-                disabled={!verses.length}
-                value={Number(currentVerse?.ayah || 0)}
-                onStep={(dir) => {
-                  const cur = activeIndexRef.current;
-                  const base = cur >= 0 ? cur : 0;
-                  const next = clamp(base + dir, 0, Math.max(0, verses.length - 1));
-                  seekVerse(next, isPlaying);
-                }}
-              />
-            </div>
-          </div>
-
-          <div className="playerSeekRow">
-            <audio ref={audioRef} src={audioSrc} preload="metadata" playsInline />
-            <div className="seekMeta mono">
-              <span>{formatTime(currentTime)}</span>
-              <span className="seekSep">/</span>
-              <span>{formatTime(duration)}</span>
-            </div>
-
-            <input
-              className="seek"
-              type="range"
-              min={0}
-              max={canSeek ? duration : 0}
-              step={0.01}
-              value={canSeek ? currentTime : 0}
-              onChange={(e) => {
-                const t = Number(e.target.value);
-                seekTo(t, isPlaying);
-              }}
-              disabled={!canSeek}
-              aria-label="Zaman çubuğu"
-            />
           </div>
         </div>
 
-        <div className="verseList">
-          {verses.map((v, idx) => (
-            <div
-              key={`${v?.ayah ?? idx}`}
-              ref={(el) => {
-                verseRefs.current[idx] = el;
-              }}
-            >
-              <VerseCard
-                verse={v}
-                active={idx === activeIndex}
-                onClick={() => seekVerse(idx, true)}
-                markSegment={markSegment}
-              />
-            </div>
-          ))}
+        {/* single player main */}
+        <div ref={rowRef}>
+          <SinglePlayerMain
+            verse={activeVerse}
+            isPlaying={isPlaying}
+            onPlayPause={onPlayPause}
+            onPrev={prevAyah}
+            onNext={nextAyah}
+            repeatMode={repeatMode}
+            onToggleRepeat={toggleRepeat}
+            markSegment={markSegment}
+          />
         </div>
-
-        <div className="bottomSpacer" />
       </main>
     </div>
   );
