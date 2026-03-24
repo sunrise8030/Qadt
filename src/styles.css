@@ -125,7 +125,7 @@ html,body{
 
 .dockSeekTop{ padding: 6px 4px 12px; }
 
-/* ✅ Seek: progress = --seekP (JS inline style set ediyor) */
+/* ✅ Smooth seek look: progress = --seekP (JS inline style set ediyor) */
 .dockSeek{
   --seekP: 0%;
   width: 100%;
