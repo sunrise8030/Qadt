@@ -1,15 +1,15 @@
 /* =========================
-   FILE: src/styles.css (FULL - HORIZONTAL DOCK + TOP THICK SEEK + BIG SELECT + VISIBLE WHEEL)
+   FILE: src/styles.css (FULL - MOBILE FIX + SMOOTH SEEK + BIG THUMB + BIG SELECT + VISIBLE WHEEL)
    ========================= */
 
 :root{
   --bg:#0b0f16;
-  --panel:#0f1520;
   --border:rgba(255,255,255,0.10);
   --text:rgba(255,255,255,0.92);
   --muted:rgba(255,255,255,0.62);
 
-  --dockH: 210px;
+  /* JS güncelliyor */
+  --dockH: 230px;
 
   --markRed: rgba(235, 78, 62, 1);
   --markRedBg: rgba(235, 78, 62, 0.18);
@@ -40,12 +40,15 @@ html,body{
 .appShell{ display:grid; grid-template-columns:1fr; min-height:100vh; }
 
 .content{
-  padding:16px;
+  padding: 14px;
   max-width: 1100px;
   margin: 0 auto;
-  padding-bottom: calc(var(--dockH) + 18px);
+
+  /* ✅ içerik dock altında kalmasın */
+  padding-bottom: calc(var(--dockH) + 18px + env(safe-area-inset-bottom));
 }
 
+/* Header */
 .surahHeader{
   border:1px solid var(--border);
   background:rgba(15,21,32,0.86);
@@ -67,9 +70,8 @@ html,body{
   padding:10px 12px;
 }
 
-/* Single Player main */
+/* Single Player */
 .singlePlayerMain{ margin-top: 14px; }
-
 .singlePlayerCard{
   width: 100%;
   background: rgba(15,21,32,0.94);
@@ -78,7 +80,7 @@ html,body{
   box-shadow: 0 30px 90px rgba(0,0,0,0.40);
   padding: 14px;
 }
-.singlePlayerLines{ display: grid; gap: 10px; }
+.singlePlayerLines{ display:grid; gap:10px; }
 .singlePlayerLine{
   border: 1px solid rgba(255,255,255,0.10);
   border-radius: 16px;
@@ -104,91 +106,99 @@ html,body{
   color: rgba(255,255,255,0.86);
 }
 
-/* Bottom fixed dock */
+/* Bottom Dock */
 .bottomDock{
   position: fixed;
-  left: 14px;
-  right: 14px;
-  bottom: calc(14px + env(safe-area-inset-bottom));
+  left: 12px;
+  right: 12px;
+  bottom: calc(12px + env(safe-area-inset-bottom));
   z-index: 10001;
 
   border-radius: 20px;
   border: 1px solid rgba(255,255,255,0.16);
-  background: rgba(0,0,0,0.52);
+  background: rgba(0,0,0,0.56);
   padding: 12px;
 
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
 }
 
-/* SEEK TOP (thick + big thumb) */
-.dockSeekTop{
-  padding: 6px 4px 12px;
-}
+.dockSeekTop{ padding: 6px 4px 12px; }
 
+/* ✅ Seek: progress = --seekP (JS inline style set ediyor) */
 .dockSeek{
+  --seekP: 0%;
   width: 100%;
+
   -webkit-appearance: none;
   appearance: none;
-  height: 12px;
+
+  height: 14px;
   border-radius: 999px;
-  background: rgba(255,255,255,0.18);
   outline: none;
   cursor: pointer;
+
+  background: linear-gradient(
+    90deg,
+    rgba(145,205,250,0.85) 0%,
+    rgba(145,205,250,0.85) var(--seekP),
+    rgba(255,255,255,0.18) var(--seekP),
+    rgba(255,255,255,0.18) 100%
+  );
+
+  touch-action: none;
 }
 
-/* WebKit thumb */
+/* WebKit */
+.dockSeek::-webkit-slider-runnable-track{
+  height: 14px;
+  border-radius: 999px;
+  background: transparent;
+}
 .dockSeek::-webkit-slider-thumb{
   -webkit-appearance: none;
   appearance: none;
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
   border-radius: 999px;
   background: rgba(145,205,250,1);
-  border: 2px solid rgba(255,255,255,0.75);
-  box-shadow: 0 10px 22px rgba(0,0,0,0.35);
-  margin-top: -8px; /* align to 12px track */
-}
-
-/* WebKit track */
-.dockSeek::-webkit-slider-runnable-track{
-  height: 12px;
-  border-radius: 999px;
-  background: rgba(255,255,255,0.18);
+  border: 2px solid rgba(255,255,255,0.78);
+  box-shadow: 0 12px 26px rgba(0,0,0,0.40);
+  margin-top: -8px;
 }
 
 /* Firefox */
 .dockSeek::-moz-range-track{
-  height: 12px;
+  height: 14px;
   border-radius: 999px;
   background: rgba(255,255,255,0.18);
 }
 .dockSeek::-moz-range-progress{
-  height: 12px;
+  height: 14px;
   border-radius: 999px;
   background: rgba(145,205,250,0.65);
 }
 .dockSeek::-moz-range-thumb{
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
   border-radius: 999px;
   background: rgba(145,205,250,1);
-  border: 2px solid rgba(255,255,255,0.75);
-  box-shadow: 0 10px 22px rgba(0,0,0,0.35);
+  border: 2px solid rgba(255,255,255,0.78);
+  box-shadow: 0 12px 26px rgba(0,0,0,0.40);
 }
 
-/* One horizontal row */
+/* Row */
 .dockRow{
   display:flex;
+  align-items:center;
   gap: 10px;
-  align-items: center;
   flex-wrap: nowrap;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   white-space: nowrap;
-  padding-bottom: 2px;
 }
 
-/* Big selector (not tiny) */
+/* Big selector */
 .dockSelectBig{
   -webkit-appearance: none;
   appearance: none;
@@ -196,10 +206,9 @@ html,body{
   height: 70px;
   min-width: 260px;
   max-width: 360px;
-
   padding: 0 16px;
-  border-radius: 18px;
 
+  border-radius: 18px;
   font-size: 18px;
   font-weight: 950;
   line-height: 1;
@@ -258,7 +267,6 @@ html,body{
   flex: 0 0 auto;
 }
 
-/* Big time */
 .dockTimeBig{
   font-size: 18px;
   font-weight: 950;
@@ -270,14 +278,9 @@ html,body{
   flex: 0 0 auto;
 }
 
-/* Wheel visible + big */
-.dockWheelWrap{
-  flex: 0 0 auto;
-  display:flex;
-  align-items:center;
-}
-
 /* Wheel */
+.dockWheelWrap{ flex: 0 0 auto; display:flex; align-items:center; }
+
 .spPicker3D{
   width: 150px;
   height: 190px;
@@ -327,7 +330,7 @@ html,body{
   text-shadow: 0 2px 14px rgba(0,0,0,0.38);
 }
 
-/* Segment styles */
+/* Segment */
 .mark{
   display:inline;
   padding: 0.10em 0.34em;
@@ -341,66 +344,31 @@ html,body{
 .fontRed{ color: var(--markRed) !important; }
 .fontGreen{ color: var(--markGreen) !important; }
 
-/* Mobile tightening */
 @media (max-width: 520px){
-  .content{ padding: 12px; padding-bottom: calc(var(--dockH) + 14px); }
+  .content{ padding: 12px; padding-bottom: calc(var(--dockH) + 14px + env(safe-area-inset-bottom)); }
 
   .dockSelectBig{
     height: 64px;
-    min-width: 230px;
+    min-width: 240px;
     font-size: 16px;
     border-radius: 16px;
   }
 
-  .spBtn{
-    min-width: 60px;
-    height: 60px;
-    font-size: 24px;
-    border-radius: 16px;
-  }
+  .spBtn{ min-width: 60px; height: 60px; font-size: 24px; border-radius: 16px; }
+  .spBtnPrimary{ min-width: 112px; height: 66px; font-size: 28px; }
+  .spRBtn{ min-width: 60px; height: 60px; font-size: 20px; border-radius: 16px; }
 
-  .spBtnPrimary{
-    min-width: 112px;
-    height: 66px;
-    font-size: 28px;
-  }
+  .spPicker3D{ width: 138px; height: 176px; }
+  .spPickerItem3D{ font-size: 36px; }
 
-  .spRBtn{
-    min-width: 60px;
-    height: 60px;
-    font-size: 20px;
-    border-radius: 16px;
-  }
+  .dockTimeBig{ font-size: 16px; padding: 10px 12px; }
 
-  .spPicker3D{
-    width: 138px;
-    height: 176px;
-  }
-
-  .spPickerItem3D{
-    font-size: 36px;
-  }
-
-  .dockTimeBig{
-    font-size: 16px;
-    padding: 10px 12px;
-  }
-
-  .dockSeek{
-    height: 12px;
-  }
-  .dockSeek::-webkit-slider-thumb{
-    width: 26px;
-    height: 26px;
-    margin-top: -7px;
-  }
-  .dockSeek::-moz-range-thumb{
-    width: 26px;
-    height: 26px;
-  }
+  .dockSeek{ height: 14px; }
+  .dockSeek::-webkit-slider-thumb{ width: 28px; height: 28px; margin-top: -7px; }
+  .dockSeek::-moz-range-thumb{ width: 28px; height: 28px; }
 }
 
-/* PERF: Safari fallback */
+/* Safari fallback */
 .isSafari .bottomDock{
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
